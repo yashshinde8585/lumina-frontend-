@@ -1,312 +1,96 @@
 # AI Resume Generator
 
-> **Production-Ready Resume Builder** powered by AI with modern design and accessibility features
-
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![React](https://img.shields.io/badge/React-18.0.0-blue?logo=react)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.0.0-cyan?logo=tailwind-css)
+
+## 📌 Project Title & Description
+**AI Resume Generator** is a modern, AI-powered web application designed to streamline the resume creation process. It leverages Google's Gemini AI to automatically generate professional, ATS-optimized content from simple job descriptions, wrapping it all in a stunning glassmorphic user interface.
+
+## ❓ Problem Statement
+Job seekers often struggle to create resumes that pass Applicant Tracking Systems (ATS) while maintaining a professional design. Writing tailored content for every job application is time-consuming and repetitive. Existing tools are either too clunky, expensive, or lack intelligent customization. **AI Resume Generator** solves this by combining powerful AI for content generation with a beautiful, easy-to-use editor.
 
 ## ✨ Features
+- **🤖 AI-Powered Content**: Paste a job description and experience level to generate tailored resume sections instantly using Google Gemini.
+- **🎨 Modern Glassmorphism UI**: A visually striking, responsive interface built with Tailwind CSS and Framer Motion.
+- **⚡ Real-Time WYSIWYG Editor**: Edit generated content seamlessly with a live preview.
+- **📄 One-Click PDF Export**: Download your resume in a clean, professional format ready for application.
+- **� Secure Authentication**: User accounts with secure login/signup to save and manage multiple resumes.
+- **� Fully Responsive**: Optimized for Desktop, Tablet, and Mobile experiences.
 
-- 🤖 **AI-Powered Generation** - Automatically generate tailored resumes from job descriptions
-- 🎨 **Premium Design** - Modern, glassmorphic UI with smooth animations
-- ♿ **Accessible** - WCAG AA compliant with full keyboard navigation
-- 📱 **Responsive** - Works seamlessly on desktop, tablet, and mobile
-- 🎯 **ATS-Optimized** - Clean formatting that passes Applicant Tracking Systems
-- 💾 **Multi-Resume Management** - Save and manage multiple resumes
-- 🖨️ **PDF Export** - One-click PDF download
-- ⚡ **Real-time Editing** - WYSIWYG editor with live preview
-- 🔐 **Secure Authentication** - JWT-based auth with encrypted storage
+## 🛠 Tech Stack
+- **Frontend Framework**: React.js (Vite)
+- **Styling**: Tailwind CSS, Vanilla CSS (for custom glassmorphism)
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **State Management**: React Context API
+- **API Client**: Axios
 
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Node.js** 16+ and npm/yarn
-- **Backend API** running on `http://localhost:5002` (see [Backend Setup](#backend-setup))
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd my-resume
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`
-
----
-
-## 📁 Project Structure
+## 📂 Project Architecture
+The project follows a modular, component-based architecture for scalability and maintainability.
 
 ```
 my-resume/
 ├── src/
 │   ├── components/
-│   │   ├── editor/          # Resume editing components
-│   │   │   └── ResumeSections.jsx
-│   │   └── ui/              # Reusable UI components
-│   │       ├── Button.jsx
-│   │       ├── Card.jsx
-│   │       ├── Input.jsx    # ✨ NEW: Accessible input
-│   │       ├── Modal.jsx    # ✨ NEW: Accessible modal
-│   │       ├── Select.jsx
-│   │       └── TextArea.jsx
-│   ├── context/
-│   │   └── ResumeContext.jsx # Global state management
-│   ├── lib/
-│   │   └── axios.js         # API client configuration
-│   ├── pages/
-│   │   ├── Dashboard.jsx    # Resume management
-│   │   ├── Editor.jsx       # Resume editor
-│   │   ├── Generator.jsx    # AI generation
-│   │   ├── Home.jsx         # Landing page
-│   │   ├── Login.jsx        # ✨ REDESIGNED
-│   │   ├── Signup.jsx       # ✨ REDESIGNED
-│   │   └── LexicalEditor.jsx
-│   ├── utils/
-│   │   ├── constants.js     # ✨ NEW: Centralized constants
-│   │   ├── validation.js    # ✨ NEW: Form validation
-│   │   └── utils.js
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── public/
-├── package.json
-└── README.md
+│   │   ├── editor/         # Resume editing logic & sub-components
+│   │   ├── home/           # Landing page specific components
+│   │   ├── ui/             # Reusable atomic UI elements (Buttons, Inputs)
+│   ├── context/            # Global state (Authentication, Resume Data)
+│   ├── pages/              # Application Routes (Home, Dashboard, Editor)
+│   ├── services/           # API integration services
+│   └── utils/              # Helper functions, constants, validation
+├── public/                 # Static assets
+└── tailwind.config.js      # Design Token configuration
 ```
 
----
+## 🚀 Installation & Setup Instructions
 
-## 🎨 Component Library
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/yourusername/my-resume.git
+    cd my-resume
+    ```
 
-### Button Component
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-```jsx
-import { Button } from './components/ui/Button';
+3.  **Start the Development Server**
+    ```bash
+    npm run dev
+    ```
+    The application will launch at `http://localhost:5173`.
 
-// Variants: primary, secondary, outline, danger
-<Button variant="primary" onClick={handleClick}>
-  Click Me
-</Button>
-```
-
-### Input Component (NEW ✨)
-
-```jsx
-import { Input } from './components/ui/Input';
-
-<Input
-  label="Email"
-  type="email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  error={errors.email}
-  required
-/>
-```
-
-### Modal Component (NEW ✨)
-
-```jsx
-import { Modal, ConfirmModal } from './components/ui/Modal';
-
-// Basic Modal
-<Modal isOpen={isOpen} onClose={onClose} title="Modal Title">
-  <p>Modal content</p>
-</Modal>
-
-// Confirmation Modal
-<ConfirmModal
-  isOpen={isOpen}
-  onClose={onClose}
-  onConfirm={handleConfirm}
-  title="Delete Resume"
-  message="Are you sure?"
-  variant="danger"
-/>
-```
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
+## 🔑 Environment Variables
+Create a `.env` file in the root directory to configure the application.
 
 ```env
-VITE_API_BASE_URL=http://localhost:5002/api/v1
+# API Base URL (Point this to your local or hosted backend)
+VITE_API_BASE_URL=http://localhost:5002/api
 ```
 
-### Tailwind Configuration
+## 🔌 API Endpoints / Integration
+The frontend communicates with the `Backend-my-resume` service. Key integrations include:
 
-Custom colors and fonts are defined in `tailwind.config.js`:
+- `POST /auth/login`: Authenticates users and retrieves JWT.
+- `POST /generate`: Sends Job Description to AI and receives JSON resume structure.
+- `POST /resumes`: Saves key resume data to the database.
 
-```js
-colors: {
-  primary: '#2563EB',
-  secondary: '#475569',
-  paper: '#FFFFFF',
-  canvas: '#F3F4F6',
-}
-```
+## 📸 Screenshots
+*(Placeholder for project screenshots - add images of Landing Page, Editor, and Dashboard here)*
 
----
+## 🔮 Future Enhancements
+- [ ] **Multi-Template Support**: Add more template designs (Minimal, Creative, Corporate).
+- [ ] **AI Cover Letter**: Generate matching cover letters for resumes.
+- [ ] **LinkedIn Import**: Import profile data directly from LinkedIn PDF.
+- [ ] **Resume Scoring**: Real-time feedback on resume quality.
 
-## 🧪 Testing
-
-```bash
-# Run tests (when implemented)
-npm test
-
-# Run linter
-npm run lint
-```
+## ✍️ Author & Contact
+**Your Name**
+- GitHub: [@yourusername](https://github.com/yourusername)
+- Email: your.email@example.com
 
 ---
-
-## 📦 Build for Production
-
-```bash
-# Create production build
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-The build output will be in the `dist/` directory.
-
----
-
-## ♿ Accessibility Features
-
-This application is built with accessibility as a priority:
-
-- ✅ **WCAG AA Compliant** - Proper contrast ratios and semantic HTML
-- ✅ **Keyboard Navigation** - Full keyboard support with visible focus indicators
-- ✅ **Screen Reader Support** - ARIA labels and live regions
-- ✅ **Form Validation** - Clear error messages with visual and text feedback
-- ✅ **Focus Management** - Proper focus trapping in modals
-
-### Keyboard Shortcuts
-
-- `Tab` / `Shift+Tab` - Navigate between elements
-- `Enter` / `Space` - Activate buttons and links
-- `Escape` - Close modals and dropdowns
-
----
-
-## 🎯 User Flow
-
-1. **Landing Page** (`/`) - View features and examples
-2. **Sign Up** (`/signup`) - Create account with validation
-3. **Generate Resume** (`/generate`) - Paste job description, select level
-4. **Edit Resume** (`/editor`) - Customize with Form or Doc mode
-5. **Save & Download** - Save to dashboard or export as PDF
-6. **Dashboard** (`/dashboard`) - Manage all saved resumes
-
----
-
-## 🔐 Authentication
-
-The app uses JWT-based authentication:
-
-- Tokens stored in `localStorage`
-- Axios interceptor adds `Authorization` header
-- Protected routes redirect to login if unauthenticated
-
-```js
-// Example: Protected API call
-const response = await axiosInstance.get('/resumes');
-```
-
----
-
-## 🎨 Design System
-
-### Colors
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `primary` | #2563EB | Primary actions, links |
-| `secondary` | #475569 | Secondary text |
-| `paper` | #FFFFFF | Card backgrounds |
-| `canvas` | #F3F4F6 | Page backgrounds |
-
-### Typography
-
-- **Sans**: Inter, Roboto
-- **Serif**: Merriweather, Garamond
-
-### Spacing Scale
-
-Uses Tailwind's default spacing scale (4px base unit)
-
----
-
-## 🐛 Known Issues & Limitations
-
-- [ ] Mobile editor experience needs optimization for A4 paper size
-- [ ] Offline mode not yet implemented
-- [ ] No undo/redo in editor
-- [ ] Limited to 2 resume templates
-
----
-
-## 🚧 Roadmap
-
-- [ ] Add more resume templates
-- [ ] Implement real-time collaboration
-- [ ] Add resume analytics (views, downloads)
-- [ ] Support for multiple languages
-- [ ] Integration with LinkedIn
-- [ ] AI-powered resume scoring
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- **Framer Motion** - Smooth animations
-- **Tailwind CSS** - Utility-first styling
-- **Lucide React** - Beautiful icons
-- **React Quill** - Rich text editing
-
----
-
-## 📞 Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Email: support@example.com
-
----
-
-**Made with ❤️ by the Resume Builder Team**
+*Built with ❤️ for job seekers everywhere.*
