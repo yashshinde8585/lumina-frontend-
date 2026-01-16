@@ -72,10 +72,21 @@ const AdminDashboard = () => {
 
     const handleImpersonate = async (user: User) => {
         try {
+            // BACKUP THE ADMIN TOKEN before overwriting it
+            const adminToken = authService.getToken();
+            const adminUser = authService.getUserName();
+            const adminEmail = authService.getUserEmail();
+
+            if (adminToken) {
+                localStorage.setItem('admin_backup_token', adminToken);
+                if (adminUser) localStorage.setItem('admin_backup_name', adminUser);
+                if (adminEmail) localStorage.setItem('admin_backup_email', adminEmail);
+            }
+
             const response = await adminService.impersonateUser(user.id);
 
             if (response.success) {
-                // Store the impersonation token
+                // Store the impersonation token (overwrites acts-as-user)
                 authService.setToken(response.token);
                 authService.setUserName(response.user.name);
                 authService.setUserEmail(response.user.email);
@@ -83,6 +94,9 @@ const AdminDashboard = () => {
                 setImpersonating(user);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 toast.success(`Now viewing as ${user.name}`);
+
+                // Force a reload to ensure all axios instances/contexts pick up the new token immediately
+                setTimeout(() => window.location.reload(), 1000);
             }
         } catch (error: any) {
             console.error('Impersonation failed:', error);
@@ -91,10 +105,31 @@ const AdminDashboard = () => {
     };
 
     const handleStopImpersonation = () => {
-        // In a real app, you'd restore the admin's original token
-        setImpersonating(null);
-        toast.success("Stopped impersonating");
-        // Optionally reload the page or re-authenticate as admin
+        // Restore the admin's original token
+        const backupToken = localStorage.getItem('admin_backup_token');
+        const backupName = localStorage.getItem('admin_backup_name');
+        const backupEmail = localStorage.getItem('admin_backup_email');
+
+        if (backupToken) {
+            authService.setToken(backupToken);
+            if (backupName) authService.setUserName(backupName);
+            if (backupEmail) authService.setUserEmail(backupEmail);
+
+            // Clear backups
+            localStorage.removeItem('admin_backup_token');
+            localStorage.removeItem('admin_backup_name');
+            localStorage.removeItem('admin_backup_email');
+
+            setImpersonating(null);
+            toast.success("Restored Admin Session");
+
+            // Reload to apply admin rights again
+            setTimeout(() => window.location.reload(), 500);
+        } else {
+            // Fallback if something went wrong (logout)
+            authService.logout();
+            navigate('/login');
+        }
     };
 
     // --- Components ---
@@ -243,7 +278,7 @@ const AdminDashboard = () => {
                     }
                     break;
                 case 'delete':
-                    if (confirm(`⚠️ DANGER: Permanently delete ${user.name} and all their data? This cannot be undone!`)) {
+                    if (confirm(`DANGER: Permanently delete ${user.name} and all their data? This cannot be undone!`)) {
                         toast.error(`${user.name} has been deleted`);
                         // TODO: Call API
                     }

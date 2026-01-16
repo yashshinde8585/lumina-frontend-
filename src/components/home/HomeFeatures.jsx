@@ -7,14 +7,14 @@ import { Bot, CheckCircle, Zap, Layout, AlertCircle, ArrowRight } from 'lucide-r
 const HomeFeatures = () => {
     return (
         <div id="features" className="bg-white py-24 md:py-32 border-t border-gray-200 relative z-10">
-            <div className="container mx-auto px-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Section Header */}
                 <div className="mb-20 max-w-3xl">
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-6 tracking-tight leading-tight">
                         Why ResumeAI beats <br className="hidden md:block" />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">traditional resume builders</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">traditional builders</span>
                     </h2>
-                    <p className="text-xl text-gray-600 leading-relaxed">
+                    <p className="text-lg text-gray-600 leading-relaxed">
                         Real AI. Real results. Built for modern recruiters and ATS systems.
                     </p>
                 </div>
@@ -37,7 +37,7 @@ const HomeFeatures = () => {
                             <ul className="space-y-3 mb-8">
                                 <li className="flex items-start gap-3 text-gray-600">
                                     <CheckCircle size={18} className="text-blue-600 mt-1 shrink-0" />
-                                    <span>Not generic templates. Real job-specific writing.</span>
+                                    <span>No generic templates. Real job-specific writing.</span>
                                 </li>
                                 <li className="flex items-start gap-3 text-gray-600">
                                     <CheckCircle size={18} className="text-blue-600 mt-1 shrink-0" />
@@ -45,7 +45,7 @@ const HomeFeatures = () => {
                                 </li>
                                 <li className="flex items-start gap-3 text-gray-600">
                                     <CheckCircle size={18} className="text-blue-600 mt-1 shrink-0" />
-                                    <span>Uses recruiter-grade action verbs</span>
+                                    <span>Use recruiter-grade action verbs</span>
                                 </li>
                             </ul>
                         </div>

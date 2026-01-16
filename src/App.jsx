@@ -15,6 +15,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const JobDetails = lazy(() => import('./pages/JobDetails'));
 const MyResumesPage = lazy(() => import('./pages/MyResumesPage'));
+const AccountProfile = lazy(() => import('./pages/AccountProfile'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -27,6 +28,7 @@ const PageLoader = () => (
 );
 
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function App() {
   return (
@@ -40,14 +42,55 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/generate" element={<Generator />} />
-                <Route path="/editor" element={<Editor />} />
-                <Route path="/editor/:id" element={<Editor />} />
-                <Route path="/lexical" element={<LexicalEditor />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/job-details" element={<JobDetails />} />
-                <Route path="/resumes" element={<MyResumesPage />} />
+
+                {/* Protected User Routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/generate" element={
+                  <ProtectedRoute>
+                    <Generator />
+                  </ProtectedRoute>
+                } />
+                <Route path="/editor" element={
+                  <ProtectedRoute>
+                    <Editor />
+                  </ProtectedRoute>
+                } />
+                <Route path="/editor/:id" element={
+                  <ProtectedRoute>
+                    <Editor />
+                  </ProtectedRoute>
+                } />
+                <Route path="/lexical" element={
+                  <ProtectedRoute>
+                    <LexicalEditor />
+                  </ProtectedRoute>
+                } />
+                <Route path="/job-details" element={
+                  <ProtectedRoute>
+                    <JobDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/resumes" element={
+                  <ProtectedRoute>
+                    <MyResumesPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <AccountProfile />
+                  </ProtectedRoute>
+                } />
+
+                {/* Protected Admin Routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
               </Routes>
             </Suspense>
           </div>
