@@ -16,9 +16,9 @@ interface SectionSummaryProps extends BaseSectionProps {
     update: (field: string, value: string) => void;
 }
 
-export const SectionSummary: React.FC<SectionSummaryProps> = ({ data, update, accentColor, isCompact }) => (
-    <section className="mb-2 group relative">
-        <h2 className={`text-xl font-bold uppercase border-b tracking-wider flex justify-between items-center ${isCompact ? 'mb-1 pb-1 text-base' : 'mb-3'}`} style={{ color: accentColor, borderColor: '#e5e7eb' }}>
+export const SectionSummary: React.FC<SectionSummaryProps> = ({ data, update }) => (
+    <section className="resume-section group relative">
+        <h2 className="resume-heading">
             Professional Summary
         </h2>
         <div className="text-sm text-gray-800 leading-relaxed">
@@ -40,7 +40,7 @@ interface SectionSkillsProps extends BaseSectionProps {
     update: (skills: string[]) => void;
 }
 
-export const SectionSkills: React.FC<SectionSkillsProps> = ({ skills, update, accentColor, isCompact }) => {
+export const SectionSkills: React.FC<SectionSkillsProps> = ({ skills, update, isCompact }) => {
     const [isAdding, setIsAdding] = useState(false);
 
     const saveSkill = (val: string) => {
@@ -51,8 +51,8 @@ export const SectionSkills: React.FC<SectionSkillsProps> = ({ skills, update, ac
     const removeSkill = (index: number) => update(skills.filter((_, i) => i !== index));
 
     return (
-        <section className="mb-2">
-            <h2 className={`text-xl font-bold uppercase border-b tracking-wider flex justify-between items-center ${isCompact ? 'mb-1 pb-1 text-base' : 'mb-3'}`} style={{ color: accentColor, borderColor: '#e5e7eb' }}>
+        <section className="resume-section">
+            <h2 className="resume-heading">
                 Skills
                 {!isAdding && (
                     <button
@@ -64,7 +64,7 @@ export const SectionSkills: React.FC<SectionSkillsProps> = ({ skills, update, ac
                     </button>
                 )}
             </h2>
-            <div className={`flex flex-wrap ${isCompact ? 'gap-1' : 'gap-2'}`}>
+            <div className={`flex flex-wrap gap-2 layout-compact:gap-1`}>
                 {skills.length > 0 ? (
                     isCompact ? (
                         <p className="text-sm text-gray-800 leading-snug">
@@ -139,7 +139,7 @@ interface SectionListProps extends BaseSectionProps {
     update: (items: any[]) => void;
 }
 
-export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap, update, accentColor, isCompact }) => {
+export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap, update }) => {
     // Generic handlers
     const handleChange = (index: number, field: string, value: string) => {
         const newArray = [...items];
@@ -160,8 +160,8 @@ export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap
     const remove = (index: number) => update(items.filter((_, i) => i !== index));
 
     return (
-        <section className="mb-2">
-            <h2 className={`text-xl font-bold uppercase border-b tracking-wider flex justify-between items-center ${isCompact ? 'mb-1 pb-1 text-base' : 'mb-3'}`} style={{ color: accentColor, borderColor: '#e5e7eb' }}>
+        <section className="resume-section">
+            <h2 className="resume-heading">
                 {title}
                 <button
                     onClick={add}
@@ -171,9 +171,9 @@ export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap
                     <Plus size={16} aria-hidden="true" />
                 </button>
             </h2>
-            <div className={`space-y-${isCompact ? '2' : '4'}`}>
+            <div className={`space-y-4 layout-compact:space-y-2`}>
                 {items.map((item, i) => (
-                    <div key={i} className={`group relative hover:bg-gray-50 -mx-2 rounded transition-colors break-inside-avoid ${isCompact ? 'p-1' : 'p-2'}`}>
+                    <div key={i} className={`group relative hover:bg-gray-50 -mx-2 rounded transition-colors break-inside-avoid p-2 layout-compact:p-1`}>
                         <button
                             onClick={() => remove(i)}
                             aria-label={`Remove ${title.toLowerCase()} item`}
@@ -182,18 +182,18 @@ export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap
                             <Trash2 size={16} aria-hidden="true" />
                         </button>
 
-                        <div className={`flex justify-between items-baseline ${isCompact ? 'mb-0' : 'mb-1'}`}>
+                        <div className={`flex justify-between items-baseline mb-1 layout-compact:mb-0`}>
                             <input
                                 value={item[fieldMap.title]}
                                 onChange={(e) => handleChange(i, fieldMap.title, e.target.value)}
-                                className={`font-bold bg-transparent w-full focus:ring-0 border-none p-0 ${isCompact ? 'text-[11pt]' : 'text-lg'}`}
+                                className={`font-bold bg-transparent w-full focus:ring-0 border-none p-0 text-lg layout-compact:text-[11pt]`}
                                 placeholder={title}
                             />
                             {fieldMap.date && (
                                 <input
                                     value={item[fieldMap.date]}
                                     onChange={(e) => handleChange(i, fieldMap.date!, e.target.value)}
-                                    className={`text-gray-600 text-right bg-transparent focus:ring-0 border-none p-0 whitespace-nowrap ml-2 italic ${isCompact ? 'text-[11pt]' : 'text-sm'}`}
+                                    className={`text-gray-600 text-right bg-transparent focus:ring-0 border-none p-0 whitespace-nowrap ml-2 italic text-sm layout-compact:text-[11pt]`}
                                     placeholder="Date"
                                 />
                             )}
@@ -202,7 +202,7 @@ export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap
                             <input
                                 value={item[fieldMap.subtitle]}
                                 onChange={(e) => handleChange(i, fieldMap.subtitle!, e.target.value)}
-                                className={`font-semibold text-gray-700 mb-1 w-full bg-transparent focus:ring-0 border-none p-0 ${isCompact ? 'text-[11pt]' : ''}`}
+                                className={`font-semibold text-gray-700 mb-1 w-full bg-transparent focus:ring-0 border-none p-0 layout-compact:text-[11pt]`}
                                 placeholder="Subtitle"
                             />
                         )}
@@ -210,7 +210,7 @@ export const SectionList: React.FC<SectionListProps> = ({ title, items, fieldMap
                             <TextArea
                                 value={item[fieldMap.desc]}
                                 onChange={(e) => handleChange(i, fieldMap.desc!, e.target.value)}
-                                className={`w-full text-gray-800 bg-transparent border-none p-0 focus:ring-0 resize-none min-h-[40px] leading-snug ${isCompact ? 'text-[10pt]' : 'text-sm'}`}
+                                className={`w-full text-gray-800 bg-transparent border-none p-0 focus:ring-0 resize-none min-h-[40px] leading-snug text-sm layout-compact:text-[10pt]`}
                                 placeholder="Description..."
                             />
                         )}

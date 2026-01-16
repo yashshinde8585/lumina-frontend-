@@ -120,4 +120,22 @@ export const authService = {
     setUserEmail: (email: string): void => {
         localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email);
     },
+
+    /**
+     * Fetches the job board data from the backend.
+     * @returns {Promise<any>}
+     */
+    getBoard: async (): Promise<any> => {
+        const response = await axiosInstance.get(API_ENDPOINTS.AUTH + '/board');
+        return response.data;
+    },
+
+    /**
+     * Updates the job board data on the backend.
+     * @param {any} boardData
+     * @returns {Promise<void>}
+     */
+    updateBoard: async (boardData: any): Promise<void> => {
+        await axiosInstance.post(API_ENDPOINTS.AUTH + '/board', { boardData });
+    }
 };

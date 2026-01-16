@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, DollarSign, FileText, CheckSquare, Clock } from 'lucide-react';
+import { X, Calendar, DollarSign, FileText, CheckSquare, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { JobCard } from './JobBoard';
 
@@ -12,6 +12,7 @@ interface JobDetailsDrawerProps {
     onLinkResume?: (jobId: string, resumeId: number) => void;
     onUpdateNotes?: (jobId: string, notes: string) => void;
     onUpdateDescription?: (jobId: string, description: string) => void;
+    onUpdateRejectionReason?: (jobId: string, reason: string) => void;
 }
 
 const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
@@ -21,8 +22,20 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
     resumes = [],
     onLinkResume,
     onUpdateNotes,
-    onUpdateDescription
+    onUpdateDescription,
+    onUpdateRejectionReason
 }) => {
+    // Local state for performance (debounce parent updates)
+    const [localNotes, setLocalNotes] = useState('');
+    const [localDescription, setLocalDescription] = useState('');
+
+    useEffect(() => {
+        if (job) {
+            setLocalNotes(job.notes || '');
+            setLocalDescription(job.description || '');
+        }
+    }, [job]);
+
     if (!job) return null;
 
     return (
@@ -54,6 +67,7 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
                                         <img
                                             src={`https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s/g, '')}.com`}
                                             alt={job.company}
+                                            loading="lazy"
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${job.company}&background=random&size=48`;
@@ -61,8 +75,8 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-gray-900">{job.role}</h2>
-                                        <p className="text-blue-600 font-medium">{job.company}</p>
+                                        <h2 className="text-xl font-bold text-gray-900">{job.company}</h2>
+                                        <p className="text-blue-600 font-medium">{job.role}</p>
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +108,17 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
                                 <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                                     {job.linkedResumeId ? (
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
+                                            <div
+                                                className="flex items-center gap-3 cursor-pointer hover:bg-blue-100/50 p-2 rounded-lg -ml-2 transition-colors flex-1"
+                                                onClick={() => {
+                                                    const resume = resumes.find(r => r.id === job.linkedResumeId);
+                                                    if (resume?.fileUrl) {
+                                                        window.open(resume.fileUrl, '_blank');
+                                                    } else {
+                                                        toast.error("Resume file not found.");
+                                                    }
+                                                }}
+                                            >
                                                 <div className="bg-white p-2 rounded shadow-sm">
                                                     <FileText size={20} className="text-blue-600" />
                                                 </div>
@@ -135,8 +159,13 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
                                 <textarea
                                     className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-mono text-gray-700"
                                     placeholder="Paste the job description here to enable AI tailoring..."
-                                    value={job.description || ''}
-                                    onChange={(e) => onUpdateDescription?.(job.id, e.target.value)}
+                                    value={localDescription}
+                                    onChange={(e) => setLocalDescription(e.target.value)}
+                                    onBlur={() => {
+                                        if (localDescription !== (job.description || '')) {
+                                            onUpdateDescription?.(job.id, localDescription);
+                                        }
+                                    }}
                                 />
                             </div>
 
@@ -148,9 +177,37 @@ const JobDetailsDrawer: React.FC<JobDetailsDrawerProps> = ({
                                 <textarea
                                     className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
                                     placeholder="Recruiter name, key details, or interview thoughts..."
-                                    value={job.notes || ''}
-                                    onChange={(e) => onUpdateNotes?.(job.id, e.target.value)}
+                                    value={localNotes}
+                                    onChange={(e) => setLocalNotes(e.target.value)}
+                                    onBlur={() => {
+                                        if (localNotes !== (job.notes || '')) {
+                                            onUpdateNotes?.(job.id, localNotes);
+                                        }
+                                    }}
                                 />
+                            </div>
+
+                            {/* Rejection Reason Section */}
+                            <div>
+                                <h3 className="text-sm font-bold text-red-700 mb-3 flex items-center gap-2">
+                                    <AlertCircle size={16} className="text-red-500" />
+                                    REASON (OPTIONAL)
+                                </h3>
+                                <select
+                                    className="w-full p-3 border border-red-200 rounded-lg text-sm bg-red-50/50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                                    value={job.rejectionReason || ''}
+                                    onChange={(e) => onUpdateRejectionReason?.(job.id, e.target.value)}
+                                >
+                                    <option value="" disabled>Select Reason...</option>
+                                    <option value="Lack of Technical Skills">Lack of Technical Skills</option>
+                                    <option value="Not Enough Experience">Not Enough Experience</option>
+                                    <option value="Culture Fit">Culture Fit</option>
+                                    <option value="Salary Expectations">Salary Expectations</option>
+                                    <option value="Location / Relocation">Location / Relocation</option>
+                                    <option value="Position Closed / Internal Fill">Position Closed / Internal Fill</option>
+                                    <option value="No Feedback Provided">No Feedback Provided</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
 
                             {/* Timeline / History (Mock for now) */}

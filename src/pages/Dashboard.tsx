@@ -1,46 +1,33 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { Button } from '../components/ui/Button';
-import { Logo } from '../components/Logo';
-import {
-    CheckCircle, FileText,
-    User, AlertCircle, ArrowLeft, Settings, Loader2, Edit2
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { useResume } from '../context/ResumeContext';
-import { Resume } from '../types';
-
 import { motion, AnimatePresence } from 'framer-motion';
-import { authService } from '../services/authService';
-import { resumeService } from '../services/resumeService';
-
-// Components
-import JobBoard, { initialColumns, JobCard, BoardColumn, SortableJobCard } from '../components/dashboard/JobBoard';
-import AnalyticsSection from '../components/dashboard/AnalyticsSection';
-import JobDetailsDrawer from '../components/dashboard/JobDetailsDrawer';
-// import MyResumes from '../components/dashboard/MyResumes';
-
-// DnD Kit Config (Parent Context)
 import {
-    DndContext,
-    DragOverlay,
-    useSensor,
-    useSensors,
-    PointerSensor,
-    DragStartEvent,
-    DragOverEvent,
-    DragEndEvent,
-    closestCorners,
-    defaultDropAnimationSideEffects,
-    DropAnimation
+    DndContext, DragOverlay, useSensor, useSensors, MouseSensor, TouchSensor,
+    DragStartEvent, DragOverEvent, DragEndEvent, closestCorners,
+    defaultDropAnimationSideEffects, DropAnimation
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import confetti from 'canvas-confetti';
+import {
+    AlertCircle, Loader2, Edit2, CheckCircle, FileText
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '../components/ui/Button';
+
+import AppHeader from '../components/layout/AppHeader';
+import JobBoard from '../components/dashboard/JobBoard';
+import AnalyticsSection from '../components/dashboard/AnalyticsSection';
+import JobDetailsDrawer from '../components/dashboard/JobDetailsDrawer';
+import { SortableJobCard } from '../components/dashboard/board/SortableJobCard';
 
 
-
-
+import { useResume } from '../context/ResumeContext';
+import { authService } from '../services/authService';
+import { resumeService } from '../services/resumeService';
+import { TRACKING_COLUMNS, INITIAL_COLUMNS } from '../utils/constants';
+import { Resume, JobCard, BoardColumn } from '../types';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -49,27 +36,49 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name: string, email: string } | null>(null);
 
-    // Job Board State (Lifted & Shared) - Load from localStorage
+    // Job Board State (Lifted & Shared) - Load from localStorage with safe merge
     const [columns, setColumns] = useState<BoardColumn[]>(() => {
-        const savedColumns = localStorage.getItem('jobColumns');
+        const userEmail = authService.getUserEmail() || 'guest';
+        const storageKey = `jobColumns_${userEmail}`;
+        const savedColumns = localStorage.getItem(storageKey);
+
         if (savedColumns) {
             try {
-                return JSON.parse(savedColumns);
+                const parsed = JSON.parse(savedColumns);
+                // 1. Map INITIAL_COLUMNS structure
+                const result = INITIAL_COLUMNS.map(initCol => {
+                    let savedCol = parsed.find((p: any) => p.id === initCol.id);
+                    // Handle legacy ID migration
+                    if (!savedCol && initCol.id === 'interview') {
+                        savedCol = parsed.find((p: any) => p.id === 'interviewing');
+                    }
+                    return { ...initCol, items: savedCol ? savedCol.items : [] };
+                });
+
+                // 2. Data Loss Prevention: Ensure all cards from storage are preserved
+                const resultItemIds = new Set(result.flatMap(c => c.items.map((i: any) => i.id)));
+                const orphanedItems = parsed.flatMap((c: any) => c.items).filter((i: any) => !resultItemIds.has(i.id));
+
+                if (orphanedItems.length > 0) {
+                    const savedIdx = result.findIndex(c => c.id === 'saved');
+                    if (savedIdx !== -1) {
+                        result[savedIdx].items = [...result[savedIdx].items, ...orphanedItems];
+                    }
+                }
+                return result;
             } catch (error) {
                 console.error('Failed to parse saved columns:', error);
-                return initialColumns;
+                return INITIAL_COLUMNS.map(c => ({ ...c, items: [] }));
             }
         }
-        return initialColumns;
+        return INITIAL_COLUMNS.map(c => ({ ...c, items: [] }));
     });
     const [selectedJob, setSelectedJob] = useState<JobCard | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [highlightColumnId, setHighlightColumnId] = useState<string | null>(null);
 
-    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-
     // DnD State
-    const [activeDragItem, setActiveDragItem] = useState<any>(null);
+    const [activeDragItem, setActiveDragItem] = useState<JobCard | Resume | null>(null);
     const [activeDragType, setActiveDragType] = useState<'JOB' | 'RESUME' | null>(null);
 
     // Smart Drop State
@@ -83,9 +92,15 @@ const Dashboard = () => {
     const [tailorJobData, setTailorJobData] = useState<{ resumeId: number, job: JobCard } | null>(null);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
                 distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
             },
         })
     );
@@ -95,10 +110,24 @@ const Dashboard = () => {
 
     // ... (Actions) ...
 
-    // Save columns to localStorage whenever they change
+    // Save columns to localStorage and backend whenever they change
     useEffect(() => {
-        localStorage.setItem('jobColumns', JSON.stringify(columns));
-    }, [columns]);
+        const userEmail = user?.email || authService.getUserEmail() || 'guest';
+        const storageKey = `jobColumns_${userEmail}`;
+        const timeoutId = setTimeout(async () => {
+            localStorage.setItem(storageKey, JSON.stringify(columns));
+
+            // Also sync to backend if logged in
+            if (authService.getToken()) {
+                try {
+                    await authService.updateBoard(columns);
+                } catch (err) {
+                    console.error('Failed to sync board to backend:', err);
+                }
+            }
+        }, 1000); // 1-second debounce to prevent lag on rapid changes
+        return () => clearTimeout(timeoutId);
+    }, [columns, user]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -106,7 +135,6 @@ const Dashboard = () => {
             if (e.key === 'Escape') {
                 setDropModalOpen(false);
                 setTailorModalOpen(false);
-                setProfileMenuOpen(false);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -114,36 +142,59 @@ const Dashboard = () => {
     }, []);
 
     useEffect(() => {
-        const fetchResumes = async () => {
+        const fetchData = async () => {
+            setLoading(true);
             try {
-                // Try to fetch from backend first
-                const fetchedResumes = await resumeService.getAllResumes();
-                setResumes(fetchedResumes);
-            } catch (error) {
-                console.error('Failed to fetch resumes from backend:', error);
-
-                // Fallback: Load from localStorage
+                // 1. Fetch Resumes
                 try {
+                    const fetchedResumes = await resumeService.getAllResumes();
+                    setResumes(fetchedResumes);
+                } catch (error) {
+                    console.error('Failed to fetch resumes from backend:', error);
+                    // Fallback: Load from localStorage
                     const savedResumes = localStorage.getItem('savedResumes');
                     if (savedResumes) {
-                        const parsedResumes = JSON.parse(savedResumes);
-                        setResumes(parsedResumes);
+                        setResumes(JSON.parse(savedResumes));
                         toast.info('Loaded resumes from local storage');
-                    } else {
-                        // No resumes found anywhere
-                        setResumes([]);
                     }
-                } catch (localError) {
-                    console.error('Failed to load from localStorage:', localError);
-                    toast.error('Could not load resumes');
-                    setResumes([]);
+                }
+
+                // 2. Fetch Board Data
+                if (authService.getToken()) {
+                    try {
+                        const backendBoard = await authService.getBoard();
+                        if (backendBoard && Array.isArray(backendBoard) && backendBoard.length > 0) {
+                            // Map and validate backend data
+                            const result = INITIAL_COLUMNS.map(initCol => {
+                                let savedCol = backendBoard.find((p: any) => p.id === initCol.id);
+                                if (!savedCol && initCol.id === 'interview') {
+                                    savedCol = backendBoard.find((p: any) => p.id === 'interviewing');
+                                }
+                                return { ...initCol, items: savedCol ? savedCol.items : [] };
+                            });
+
+                            // Ensure all items are preserved
+                            const resultItemIds = new Set(result.flatMap(c => c.items.map((i: any) => i.id)));
+                            const orphanedItems = backendBoard.flatMap((c: any) => c.items).filter((i: any) => !resultItemIds.has(i.id));
+
+                            if (orphanedItems.length > 0) {
+                                const savedIdx = result.findIndex(c => c.id === 'saved');
+                                if (savedIdx !== -1) {
+                                    result[savedIdx].items = [...result[savedIdx].items, ...orphanedItems];
+                                }
+                            }
+                            setColumns(result);
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch board from backend:', error);
+                    }
                 }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchResumes();
+        fetchData();
 
         const userName = authService.getUserName();
         const userEmail = authService.getUserEmail();
@@ -175,6 +226,9 @@ const Dashboard = () => {
         }, 100);
         setTimeout(() => setHighlightColumnId(null), 2500);
     };
+
+
+
 
     // --- DnD Logic ---
     const findColumn = (id: string) => {
@@ -221,7 +275,7 @@ const Dashboard = () => {
 
             let newIndex;
             if (overItems.some(i => i.id === overId)) {
-                newIndex = overIndex >= 0 ? overIndex + (active.rect.current.translated?.top || 0 > over.rect.top ? 1 : 0) : overItems.length + 1;
+                newIndex = overIndex >= 0 ? overIndex + ((active.rect.current.translated?.top || 0) > over.rect.top ? 1 : 0) : overItems.length + 1;
             } else {
                 newIndex = overItems.length + 1;
             }
@@ -234,12 +288,28 @@ const Dashboard = () => {
                     const newItems = [...overItems];
                     const itemToMove = activeItems[activeIndex];
                     if (itemToMove) {
-                        // User Request: Update date to NOW if moving to 'applied' (e.g. from Saved)
-                        if (overColumnId === 'applied') {
-                            newItems.splice(newIndex, 0, { ...itemToMove, date: new Date() });
-                        } else {
-                            newItems.splice(newIndex, 0, itemToMove);
+                        const isTracking = TRACKING_COLUMNS.includes(overColumnId);
+
+                        // Track History - Only add if status actually changed from the last one in history
+                        const history = itemToMove.history || [];
+                        const lastStatus = history.length > 0 ? history[history.length - 1].status : null;
+
+                        let updatedHistory = history;
+                        if (lastStatus !== overColumnId) {
+                            updatedHistory = [...history, {
+                                status: overColumnId,
+                                date: new Date().toISOString(),
+                                type: 'status_change' as const
+                            }];
                         }
+
+                        const updatedItem = {
+                            ...itemToMove,
+                            date: isTracking ? new Date() : itemToMove.date,
+                            history: updatedHistory
+                        };
+
+                        newItems.splice(newIndex, 0, updatedItem);
                     }
                     return { ...col, items: newItems };
                 }
@@ -307,6 +377,29 @@ const Dashboard = () => {
             const overId = over.id as string;
             const activeColumnId = findColumn(activeId);
             const overColumnId = findColumn(overId);
+            const initialColumnId = active.data.current.columnId;
+
+            // Toast for Drag & Drop Move
+            if (activeColumnId && initialColumnId && activeColumnId !== initialColumnId) {
+                const companyName = active.data.current.item.company;
+                const getToastMessage = (statusId: string, company: string) => {
+                    switch (statusId) {
+                        case 'applied': return `Application submitted to ${company}.`;
+                        case 'screening': return `${company} is currently screening your profile.`;
+                        case 'aptitude': return `Aptitude assessment scheduled for ${company}.`;
+                        case 'technical': return `Technical interview scheduled with ${company}.`;
+                        case 'interview': return `Interview round confirmed with ${company}.`;
+                        case 'offer': return `Congratulations! Offer received from ${company}.`;
+                        case 'rejected': return `Application for ${company} has been closed.`;
+                        default: return `Moved ${company} to ${activeColumnId}`;
+                    }
+                };
+                toast.success(getToastMessage(activeColumnId, companyName));
+
+                if (activeColumnId === 'offer') {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#22c55e', '#ffffff', '#fbbf24'] });
+                }
+            }
 
             if (activeColumnId && overColumnId && activeColumnId === overColumnId) {
                 const columnIndex = columns.findIndex(col => col.id === activeColumnId);
@@ -320,22 +413,25 @@ const Dashboard = () => {
                         return newCols;
                     });
                 }
-            } else if (overColumnId === 'offer') {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#22c55e', '#ffffff', '#fbbf24'] });
             }
         }
     };
 
     // confirm Smart Drop Data
     const handleConfirmDrop = () => {
-        if (!dropData || !newJobCompany) return;
+        if (!dropData || !newJobCompany.trim()) return;
 
         const newCard: JobCard = {
             id: Date.now().toString(),
             company: newJobCompany,
             role: newJobRole || 'Role',
             date: new Date(),
-            linkedResumeId: dropData.resumeId
+            linkedResumeId: dropData.resumeId,
+            history: [{
+                status: dropData.columnId,
+                date: new Date().toISOString(),
+                type: 'status_change'
+            }]
         };
 
         setColumns(prev => prev.map(col => {
@@ -364,53 +460,20 @@ const Dashboard = () => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen bg-gradient-to-br from-mist via-white to-blue-50/30">
+            <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 pb-20">
                 {/* Header */}
-                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-silver shadow-sm">
-                    <div className="w-full px-6 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                            <Logo size={40} />
-                            <div className="text-left flex flex-col items-start">
-                                <h1 className="text-xl font-bold text-charcoal leading-tight">Resume Builder</h1>
-                                <p className="text-xs text-steel">AI-Powered Career Tools</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <Button variant="ghost" onClick={() => navigate('/resumes')} className="text-charcoal hover:bg-mist flex flex-row items-center gap-2">
-                                <FileText size={18} />
-                                My Resumes
-                            </Button>
-                            <div className="relative" onClick={(e) => e.stopPropagation()}>
-                                <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 px-3 py-2 bg-mist hover:bg-white rounded-lg transition-colors border border-silver">
-                                    <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">{user?.name.charAt(0).toUpperCase() || 'U'}</div>
-                                    <span className="text-sm font-medium text-charcoal">{user?.name || 'User'}</span>
-                                </button>
-                                {profileMenuOpen && (
-                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-silver py-2 z-50">
-                                        <div className="px-4 py-3 border-b border-gray-100">
-                                            <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
-                                            <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
-                                        </div>
-                                        <button onClick={() => toast.info('Profile Settings coming soon')} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                                            <User size={14} className="text-gray-500" /> Account Profile
-                                        </button>
-                                        <button onClick={() => toast.info('App Settings coming soon')} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                                            <Settings size={14} className="text-gray-500" /> Settings
-                                        </button>
-                                        <div className="border-t border-gray-100 my-1"></div>
-                                        <button onClick={() => { authService.logout(); navigate('/login'); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                            <ArrowLeft size={14} /> Logout
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <AppHeader user={user} />
 
                 {/* Main Content */}
-                <main className="max-w-8xl mx-auto px-6 py-8">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+                    {/* Header Actions */}
+                    <div className="mb-8 pt-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
+                            <p className="text-gray-500 text-sm mt-2 font-medium">Track your applications and analyze your performance.</p>
+                        </div>
+                    </div>
 
                     {/* Top Section - Analytics */}
                     <AnalyticsSection columns={columns} onFunnelClick={handleFunnelClick} />
@@ -566,10 +629,10 @@ const Dashboard = () => {
                 {/* Drag Overlay - Shows preview following cursor */}
                 <DragOverlay dropAnimation={dropAnimation}>
                     {activeDragType === 'JOB' && activeDragItem ? (
-                        <SortableJobCard item={activeDragItem} columnId="overlay" onJobClick={() => { }} />
+                        <SortableJobCard item={activeDragItem as JobCard} columnId="overlay" onJobClick={() => { }} />
                     ) : activeDragType === 'RESUME' && activeDragItem ? (
                         <div className="bg-white border border-blue-400 rounded-xl p-4 shadow-2xl w-80 rotate-6 cursor-grabbing">
-                            <h3 className="font-bold text-charcoal">{activeDragItem.title}</h3>
+                            <h3 className="font-bold text-charcoal">{(activeDragItem as Resume).title}</h3>
                             <p className="text-xs text-blue-600 mt-1">Drop on a column to track...</p>
                         </div>
                     ) : null}
@@ -600,6 +663,13 @@ const Dashboard = () => {
                             items: col.items.map(item => item.id === jobId ? { ...item, description } : item)
                         })));
                         setSelectedJob(prev => prev ? { ...prev, description } : null);
+                    }}
+                    onUpdateRejectionReason={(jobId, rejectionReason) => {
+                        setColumns(cols => cols.map(col => ({
+                            ...col,
+                            items: col.items.map(item => item.id === jobId ? { ...item, rejectionReason } : item)
+                        })));
+                        setSelectedJob(prev => prev ? { ...prev, rejectionReason } : null);
                     }}
                 />
 

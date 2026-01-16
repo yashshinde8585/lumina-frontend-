@@ -11,10 +11,10 @@ interface DraggableResumeCardProps {
     onEdit: (resume: Resume) => void;
     onDelete: (id: number) => void;
     onRename: (resume: Resume) => void;
-    status: { title: string; color: string } | null;
+
 }
 
-const DraggableResumeCard = ({ resume, onEdit, onDelete, onRename, status }: DraggableResumeCardProps) => {
+const DraggableResumeCard = ({ resume, onEdit, onDelete, onRename }: DraggableResumeCardProps) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: resume.id.toString(),
         data: {
@@ -68,18 +68,11 @@ const DraggableResumeCard = ({ resume, onEdit, onDelete, onRename, status }: Dra
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative bg-white rounded-xl p-4 border transition-all duration-300 hover:shadow-lg ${status ? 'border-l-4' : 'border-silver'
+            className={`group relative bg-white rounded-xl p-4 border transition-all duration-300 hover:shadow-lg border-silver
                 } ${isDragging ? 'shadow-2xl scale-105 z-50 cursor-grabbing' : ''}`}
         >
             {/* Status Badge */}
-            {status && (
-                <div
-                    className="absolute top-0 right-0 px-2 py-1 text-[10px] uppercase font-bold tracking-wide rounded-bl-lg rounded-tr-lg"
-                    style={{ backgroundColor: status.color + '20', color: status.color }} // 20% opacity bg
-                >
-                    {status.title}
-                </div>
-            )}
+
 
             <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
@@ -163,7 +156,7 @@ interface MyResumesProps {
     onEdit: (resume: Resume) => void;
     onDelete: (id: number) => void;
     onRename: (resume: Resume) => void;
-    getResumeStatus: (id: number) => { title: string; color: string } | null;
+
 }
 
 const MyResumes = ({
@@ -177,7 +170,7 @@ const MyResumes = ({
     onEdit,
     onDelete,
     onRename,
-    getResumeStatus
+
 }: MyResumesProps) => {
 
     const filteredResumes = resumes
@@ -255,7 +248,7 @@ const MyResumes = ({
                             onEdit={onEdit}
                             onDelete={onDelete}
                             onRename={onRename}
-                            status={getResumeStatus(resume.id)}
+
                         />
                     ))}
                 </div>

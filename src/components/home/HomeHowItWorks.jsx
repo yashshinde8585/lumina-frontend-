@@ -7,18 +7,29 @@ import { Bot, CheckCircle, ArrowRight, Star } from 'lucide-react';
 const HomeHowItWorks = () => {
     return (
         <div id="how-it-works" className="py-24 bg-gray-50 relative overflow-hidden border-t border-gray-200">
-            <div className="container mx-auto px-6 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-                {/* Section Header */}
                 <div className="text-center max-w-3xl mx-auto mb-20">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="inline-flex items-center gap-2 bg-purple-50 border border-purple-100 text-purple-600 font-semibold px-4 py-1.5 rounded-full text-sm mb-6"
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                        </span>
+                        Coming Soon
+                    </motion.div>
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight"
+                        className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-6 tracking-tight leading-tight"
                     >
-                        Let’s build your <br />
-                        <span className="text-blue-600">dream resume</span>
+                        Create your resume in <br />
+                        <span className="text-purple-600">3 simple steps</span>
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -27,7 +38,7 @@ const HomeHowItWorks = () => {
                         transition={{ delay: 0.1 }}
                         className="text-lg text-gray-600 leading-relaxed"
                     >
-                        Our AI analyzes your target job description and highlights the exact skills recruiters search for.
+                        We are developing a unique, rigorous process to ensure your resume stands out. <br className="hidden md:block" />Designed to make your life easy and get you hired.
                     </motion.p>
                 </div>
 
@@ -44,7 +55,7 @@ const HomeHowItWorks = () => {
                             className="relative pl-8 md:pl-0"
                         >
                             <span className="absolute -left-4 md:-left-12 -top-1 font-bold text-6xl md:text-8xl text-blue-100/50 -z-10 select-none">1</span>
-                            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Paste the job description</h3>
+                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-4 tracking-tight">Paste the job description</h3>
                             <p className="text-lg text-gray-600 leading-relaxed mb-6">
                                 Drop the JD from LinkedIn, Naukri or company career pages. We extract the keywords that matter and identify the skills gaps.
                             </p>
@@ -115,27 +126,91 @@ const HomeHowItWorks = () => {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
-                                    <div className="aspect-[3/4] bg-gray-50 border-2 border-blue-500 rounded-lg shadow-sm relative overflow-hidden group cursor-pointer">
+                                    {/* Active Template (Modern II) */}
+                                    <div className="aspect-[3/4] bg-white border-2 border-blue-500 rounded-lg shadow-md relative overflow-hidden group cursor-pointer transition-all hover:-translate-y-1">
                                         <div className="absolute top-0 w-full h-1 bg-blue-500"></div>
-                                        <div className="p-2 space-y-1">
-                                            <div className="w-1/2 h-1 bg-gray-200 rounded"></div>
-                                            <div className="w-3/4 h-1 bg-gray-200 rounded"></div>
+                                        <div className="p-2 flex flex-col h-full scale-[0.8] origin-top-left w-[125%]">
+                                            {/* Header */}
+                                            <div className="border-b border-gray-100 pb-1 mb-1">
+                                                <div className="w-1/2 h-1.5 bg-gray-800 rounded-sm mb-0.5"></div>
+                                                <div className="w-1/3 h-1 bg-blue-500 rounded-sm"></div>
+                                            </div>
+                                            {/* Body */}
+                                            <div className="flex gap-1 flex-1">
+                                                <div className="w-1/3 bg-blue-50/50 rounded-sm p-1">
+                                                    <div className="w-full h-0.5 bg-blue-200 mb-1"></div>
+                                                    <div className="space-y-0.5">
+                                                        <div className="w-3/4 h-0.5 bg-gray-300"></div>
+                                                        <div className="w-1/2 h-0.5 bg-gray-300"></div>
+                                                        <div className="w-2/3 h-0.5 bg-gray-300"></div>
+                                                    </div>
+                                                </div>
+                                                <div className="w-2/3 space-y-1">
+                                                    <div className="w-full h-1 bg-gray-100 rounded-sm"></div>
+                                                    <div className="space-y-0.5">
+                                                        <div className="w-full h-0.5 bg-gray-300"></div>
+                                                        <div className="w-5/6 h-0.5 bg-gray-300"></div>
+                                                        <div className="w-full h-0.5 bg-gray-300"></div>
+                                                    </div>
+                                                    <div className="w-full h-1 bg-gray-100 rounded-sm mt-1"></div>
+                                                    <div className="space-y-0.5">
+                                                        <div className="w-full h-0.5 bg-gray-300"></div>
+                                                        <div className="w-4/5 h-0.5 bg-gray-300"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
                                                 <CheckCircle size={12} className="text-blue-600" />
                                             </div>
                                         </div>
                                     </div>
-                                    {[1, 2].map((i) => (
-                                        <div key={i} className="aspect-[3/4] bg-gray-50 border border-gray-100 rounded-lg opacity-60 grayscale relative overflow-hidden">
-                                            <div className="p-2 space-y-1">
-                                                <div className="w-1/2 h-1 bg-gray-300 rounded"></div>
-                                                <div className="w-3/4 h-1 bg-gray-300 rounded"></div>
-                                                <div className="w-full h-8 bg-gray-200 rounded mt-2"></div>
+
+                                    {/* Inactive Template 1 (Classic) */}
+                                    <div className="aspect-[3/4] bg-white border border-gray-100 rounded-lg relative overflow-hidden opacity-80 hover:opacity-100 transition-all hover:border-blue-200 hover:shadow-sm">
+                                        <div className="p-2 flex flex-col h-full scale-[0.8] origin-top-left w-[125%]">
+                                            <div className="text-center mb-1">
+                                                <div className="w-1/2 h-1.5 bg-gray-700 rounded-sm mx-auto mb-0.5"></div>
+                                                <div className="w-1/3 h-0.5 bg-gray-400 rounded-sm mx-auto"></div>
+                                            </div>
+                                            <div className="space-y-1 mt-1">
+                                                <div className="w-full h-0.5 bg-gray-200 mb-0.5"></div>
+                                                <div className="space-y-0.5">
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                </div>
+                                                <div className="w-full h-0.5 bg-gray-200 mb-0.5 mt-1"></div>
+                                                <div className="space-y-0.5">
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                    <div className="w-2/3 h-0.5 bg-gray-300"></div>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
+
+                                    {/* Inactive Template 2 (Creative) */}
+                                    <div className="aspect-[3/4] bg-white border border-gray-100 rounded-lg relative overflow-hidden opacity-80 hover:opacity-100 transition-all hover:border-blue-200 hover:shadow-sm">
+                                        <div className="p-2 flex flex-col h-full scale-[0.8] origin-top-left w-[125%]">
+                                            <div className="flex gap-1 mb-1 items-center border-b border-gray-100 pb-1">
+                                                <div className="w-3 h-3 rounded-full bg-gray-200"></div>
+                                                <div className="flex-1">
+                                                    <div className="w-1/2 h-1.5 bg-gray-800 rounded-sm"></div>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1 h-full">
+                                                <div className="space-y-1">
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                    <div className="w-3/4 h-0.5 bg-gray-300"></div>
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                    <div className="w-full h-0.5 bg-gray-300"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="absolute -inset-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl blur-2xl opacity-50 -z-10"></div>
@@ -150,7 +225,7 @@ const HomeHowItWorks = () => {
                             className="relative pl-8 md:pl-0 md:order-2 order-1"
                         >
                             <span className="absolute -left-4 md:-left-12 -top-1 font-bold text-6xl md:text-8xl text-purple-100/50 -z-10 select-none">2</span>
-                            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Choose your experience & template</h3>
+                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-4 tracking-tight">Choose your experience & template</h3>
                             <p className="text-lg text-gray-600 leading-relaxed mb-6">
                                 Select your projects, skills and preferred resume layout. We auto-format everything to ensure perfect margins and spacing.
                             </p>
@@ -172,7 +247,7 @@ const HomeHowItWorks = () => {
                             className="relative pl-8 md:pl-0"
                         >
                             <span className="absolute -left-4 md:-left-12 -top-1 font-bold text-6xl md:text-8xl text-green-100/50 -z-10 select-none">3</span>
-                            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Generate & polish in our AI editor</h3>
+                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-4 tracking-tight">Generate & polish in our AI editor</h3>
                             <p className="text-lg text-gray-600 leading-relaxed mb-6">
                                 Optimize keywords, formatting and ATS score in real time. Get instant feedback and suggestions to improve your impact.
                             </p>
@@ -230,14 +305,7 @@ const HomeHowItWorks = () => {
                 </div>
 
                 {/* Bottom CTA */}
-                <div className="mt-24 text-center">
-                    <h4 className="text-2xl font-bold text-gray-900 mb-6">Ready to see your ATS score improve?</h4>
-                    <Link to="/generate">
-                        <Button className="text-lg px-10 py-4 bg-gray-900 hover:bg-black text-white rounded-xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-2 mx-auto">
-                            Get started free <ArrowRight size={20} />
-                        </Button>
-                    </Link>
-                </div>
+
 
             </div>
         </div>
