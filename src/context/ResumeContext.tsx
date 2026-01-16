@@ -26,24 +26,33 @@ export const useResume = (): ResumeState & ResumeDispatch => {
     return { ...state, ...dispatch };
 };
 
+
+const DEFAULT_RESUME: ResumeData = {
+    personalInfo: {
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phone: '123-456-7890',
+        linkedin: '',
+        links: []
+    },
+    summary: 'Highly motivated professional with experience in software development...',
+    experience: [],
+    skills: ['React', 'JavaScript', 'Node.js'],
+    projects: [],
+    education: [],
+    certifications: []
+};
+
 export const ResumeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [resumeData, setResumeData] = useState<ResumeData>(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.RESUME_DATA);
-        return saved ? JSON.parse(saved) : {
-            personalInfo: {
-                fullName: 'John Doe',
-                email: 'john@example.com',
-                phone: '123-456-7890',
-                linkedin: '',
-                links: []
-            },
-            summary: 'Highly motivated professional with experience in software development...',
-            experience: [],
-            skills: ['React', 'JavaScript', 'Node.js'],
-            projects: [],
-            education: [],
-            certifications: []
-        };
+        try {
+            const saved = localStorage.getItem(STORAGE_KEYS.RESUME_DATA);
+            if (!saved || saved === "undefined") return DEFAULT_RESUME;
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error("Failed to parse resume data", e);
+            return DEFAULT_RESUME;
+        }
     });
 
     const [isLoading, setIsLoading] = useState<boolean>(false);

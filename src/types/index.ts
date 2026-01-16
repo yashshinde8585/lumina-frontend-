@@ -75,3 +75,33 @@ export interface ContentBlock {
     value: string;
     lastUpdated: string;
 }
+
+export interface JobCard {
+    id: string;
+    company: string;
+    role: string;
+    date: Date;
+    salary?: string;
+    linkedResumeId?: string | number;
+    externalResume?: {
+        name: string;
+        data: string; // Base64 Data URI
+    };
+    notes?: string;
+    description?: string;
+    reflection?: string;
+    rejectionRound?: string;
+    rejectionReason?: string;
+    history?: {
+        status: string;
+        date: string;
+        type?: 'status_change' | 'note_added' | 'manual';
+    }[];
+}
+
+export interface BoardColumn {
+    id: string;
+    title: string;
+    color: string;
+    items: JobCard[];
+}

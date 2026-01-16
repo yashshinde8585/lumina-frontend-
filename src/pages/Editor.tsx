@@ -11,50 +11,13 @@ import { DesignSidebar } from '../components/editor/DesignSidebar';
 import { ResumeForm } from '../components/editor/ResumeForm';
 import { usePrintResume } from '../hooks/usePrintResume';
 import { resumeService } from '../services/resumeService';
+import { authService } from '../services/authService';
 import { FONTS, THEME_COLORS, TEMPLATES } from '../utils/constants';
 // @ts-ignore
 import SaveResumeWithJobModal, { JobDetails } from '../components/dashboard/SaveResumeWithJobModal';
+import { ATSView } from '../components/editor/ATSView';
 
-// ATS View Component (Simple Plain Text Representation)
-const ATSView = ({ data }: { data: ResumeData }) => (
-    <div className="bg-white p-12 max-w-[210mm] mx-auto shadow-sm border font-mono text-sm leading-relaxed text-black">
-        <h1 className="text-xl font-bold uppercase mb-4">{data.personalInfo.fullName}</h1>
-        <div className="mb-4">
-            {data.personalInfo.email} | {data.personalInfo.phone} | {data.personalInfo.linkedin}
-        </div>
 
-        <div className="mb-4">
-            <h2 className="font-bold uppercase border-b border-black mb-2">Summary</h2>
-            <p>{data.summary}</p>
-        </div>
-
-        <div className="mb-4">
-            <h2 className="font-bold uppercase border-b border-black mb-2">Experience</h2>
-            {data.experience.map((exp: any, i: number) => (
-                <div key={i} className="mb-2">
-                    <div className="font-bold">{exp.title}</div>
-                    <div>{exp.company} | {exp.duration}</div>
-                    <p className="mt-1">{exp.description}</p>
-                </div>
-            ))}
-        </div>
-
-        <div className="mb-4">
-            <h2 className="font-bold uppercase border-b border-black mb-2">Education</h2>
-            {data.education.map((edu: any, i: number) => (
-                <div key={i} className="mb-2">
-                    <div className="font-bold">{edu.school}</div>
-                    <div>{edu.degree} | {edu.year}</div>
-                </div>
-            ))}
-        </div>
-
-        <div>
-            <h2 className="font-bold uppercase border-b border-black mb-2">Skills</h2>
-            <p>{data.skills.join(', ')}</p>
-        </div>
-    </div>
-);
 
 const Editor: React.FC = () => {
     const { resumeData, setResumeData, updateSection } = useResume();
@@ -153,18 +116,27 @@ const Editor: React.FC = () => {
                     linkedResumeId: resumeToSave.id,
                     notes: jobDetails.notes,
                     description: jobDetails.jobUrl,
-                    deadline: jobDetails.deadline
+                    deadline: jobDetails.deadline,
+                    history: [{
+                        status: 'saved',
+                        date: new Date().toISOString(),
+                        type: 'status_change'
+                    }]
                 };
 
-                const savedColumns = localStorage.getItem('jobColumns');
+                const userEmail = authService.getUserEmail() || 'guest';
+                const storageKey = `jobColumns_${userEmail}`;
+                const savedColumns = localStorage.getItem(storageKey);
                 let columns = savedColumns ? JSON.parse(savedColumns) : [];
 
                 if (columns.length === 0) {
-                    // Create initial columns if missing
+                    // Create initial columns if missing (fallback)
                     columns = [
                         { id: 'saved', title: 'Wishlist / Saved', color: 'gray', items: [] },
                         { id: 'applied', title: 'Applied', color: 'blue', items: [] },
                         { id: 'screening', title: 'Screening', color: 'orange', items: [] },
+                        { id: 'aptitude', title: 'Aptitude', color: 'cyan', items: [] },
+                        { id: 'technical', title: 'Technical', color: 'indigo', items: [] },
                         { id: 'interview', title: 'Interview', color: 'purple', items: [] },
                         { id: 'offer', title: 'Offer', color: 'green', items: [] },
                         { id: 'rejected', title: 'Rejected', color: 'red', items: [] }
@@ -174,7 +146,7 @@ const Editor: React.FC = () => {
                 const wishlistColumn = columns.find((col: any) => col.id === 'saved');
                 if (wishlistColumn) {
                     wishlistColumn.items.unshift(wishlistCard);
-                    localStorage.setItem('jobColumns', JSON.stringify(columns));
+                    localStorage.setItem(storageKey, JSON.stringify(columns));
                     toast.success(`Resume saved & wishlist card created for ${jobDetails.company}!`);
                 } else {
                     toast.success("Resume saved! (Could not find Wishlist column)");
@@ -270,16 +242,15 @@ const Editor: React.FC = () => {
                             <div className={`shadow-2xl print:shadow-none print:w-full bg-white transition-all duration-300 origin-top transform ${viewMode === 'split' ? 'scale-[0.65] md:scale-[0.85]' : 'scale-100'}`}>
                                 <div
                                     ref={contentRef}
-                                    className={`w-full md:w-[210mm] min-h-[297mm] bg-white text-black page-break-fix relative ${isCompact ? 'p-4 md:p-[12.7mm] text-[10pt] leading-tight' : 'p-6 md:p-[20mm]'} transition-all`}
-                                    style={{ fontFamily: fontFamily === FONTS.SERIF ? 'Merriweather, serif' : 'Inter, sans-serif' }}
+                                    className={`resume-preview w-full md:w-[210mm] min-h-[297mm] bg-white text-black page-break-fix relative ${isCompact ? 'layout-compact p-4 md:p-[12.7mm]' : 'layout-detailed p-6 md:p-[20mm]'} ${fontFamily === FONTS.SERIF ? 'font-serif-resume' : 'font-sans-resume'} transition-all`}
+                                    style={{ '--resume-accent': accentColor } as React.CSSProperties}
                                 >
                                     {/* Resume Header */}
-                                    <header className={`mb-6 border-b-2 ${isCompact ? 'pb-2 mb-4 text-center' : 'pb-4'}`} style={{ borderColor: accentColor }}>
+                                    <header className={`resume-header mb-6 ${isCompact ? 'pb-2 mb-4 text-center' : 'pb-4'}`}>
                                         <input
                                             value={resumeData.personalInfo.fullName}
                                             onChange={(e) => handleInfoChange('fullName', e.target.value)}
-                                            className={`font-bold w-full bg-transparent border-none focus:ring-0 p-0 mb-1 ${isCompact ? 'text-[22pt] text-center' : 'text-4xl'}`}
-                                            style={{ color: '#1a1a1a' }}
+                                            className={`font-bold w-full bg-transparent border-none focus:ring-0 p-0 mb-1 text-gray-900 ${isCompact ? 'text-[22pt] text-center' : 'text-4xl'}`}
                                             placeholder="Your Name"
                                         />
                                         <div className={`flex gap-3 text-gray-600 flex-wrap items-center ${isCompact ? 'text-[10pt] justify-center gap-2' : 'text-sm'}`}>
@@ -298,7 +269,7 @@ const Editor: React.FC = () => {
                                         </div>
                                     </header>
 
-                                    {/* Standard Linear Layout */}
+                                    {/* Standard Linear Layout - Components now use resume-* classes internally */}
                                     <div className={`flex flex-col ${isCompact ? 'gap-3' : 'gap-6'}`}>
                                         <SectionSummary data={resumeData.summary} update={(_, v: string) => updateSection('summary', v)} {...commonProps} />
                                         <SectionSkills skills={resumeData.skills} update={(v: string[]) => updateSection('skills', v)} {...commonProps} />
@@ -316,12 +287,12 @@ const Editor: React.FC = () => {
                             <div className="shadow-2xl print:shadow-none print:w-full bg-white">
                                 <div
                                     ref={contentRef}
-                                    className={`w-full md:w-[210mm] min-h-[297mm] bg-white text-black page-break-fix relative ${isCompact ? 'p-4 md:p-[12.7mm] text-[10pt] leading-tight' : 'p-6 md:p-[20mm]'} transition-all`}
-                                    style={{ fontFamily: fontFamily === FONTS.SERIF ? 'Merriweather, serif' : 'Inter, sans-serif' }}
+                                    className={`resume-preview w-full md:w-[210mm] min-h-[297mm] bg-white text-black page-break-fix relative ${isCompact ? 'layout-compact p-4 md:p-[12.7mm]' : 'layout-detailed p-6 md:p-[20mm]'} ${fontFamily === FONTS.SERIF ? 'font-serif-resume' : 'font-sans-resume'} transition-all`}
+                                    style={{ '--resume-accent': accentColor } as React.CSSProperties}
                                 >
                                     {/* Resume Header */}
-                                    <header className={`mb-6 border-b-2 ${isCompact ? 'pb-2 mb-4 text-center' : 'pb-4'}`} style={{ borderColor: accentColor }}>
-                                        <h1 className={`font-bold ${isCompact ? 'text-[22pt] text-center' : 'text-4xl'}`} style={{ color: '#1a1a1a' }}>
+                                    <header className={`resume-header mb-6 ${isCompact ? 'pb-2 mb-4 text-center' : 'pb-4'}`}>
+                                        <h1 className={`font-bold text-gray-900 ${isCompact ? 'text-[22pt] text-center' : 'text-4xl'}`}>
                                             {resumeData.personalInfo.fullName || 'Your Name'}
                                         </h1>
                                         <div className={`flex gap-3 text-gray-600 flex-wrap items-center ${isCompact ? 'text-[10pt] justify-center gap-2' : 'text-sm'}`}>
@@ -339,8 +310,8 @@ const Editor: React.FC = () => {
 
                                     {/* Summary */}
                                     {resumeData.summary && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Professional Summary
                                             </h2>
                                             <p className={`text-gray-700 leading-relaxed ${isCompact ? 'text-[9pt]' : 'text-sm'}`}>
@@ -351,8 +322,8 @@ const Editor: React.FC = () => {
 
                                     {/* Experience */}
                                     {resumeData.experience?.length > 0 && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Experience
                                             </h2>
                                             {resumeData.experience.map((exp: any, idx: number) => (
@@ -374,8 +345,8 @@ const Editor: React.FC = () => {
 
                                     {/* Skills */}
                                     {resumeData.skills?.length > 0 && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Skills
                                             </h2>
                                             <p className={`text-gray-700 ${isCompact ? 'text-[9pt]' : 'text-sm'}`}>
@@ -386,8 +357,8 @@ const Editor: React.FC = () => {
 
                                     {/* Projects */}
                                     {resumeData.projects?.length > 0 && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Projects
                                             </h2>
                                             {resumeData.projects.map((proj: any, idx: number) => (
@@ -403,8 +374,8 @@ const Editor: React.FC = () => {
 
                                     {/* Education */}
                                     {resumeData.education?.length > 0 && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Education
                                             </h2>
                                             {resumeData.education.map((edu: any, idx: number) => (
@@ -423,8 +394,8 @@ const Editor: React.FC = () => {
 
                                     {/* Certifications */}
                                     {resumeData.certifications?.length > 0 && (
-                                        <section className={isCompact ? 'mb-3' : 'mb-6'}>
-                                            <h2 className={`font-bold uppercase tracking-wide mb-2 ${isCompact ? 'text-[11pt]' : 'text-lg'}`} style={{ color: accentColor }}>
+                                        <section className="resume-section">
+                                            <h2 className="resume-heading">
                                                 Certifications
                                             </h2>
                                             {resumeData.certifications.map((cert: any, idx: number) => (
@@ -451,9 +422,7 @@ const Editor: React.FC = () => {
             />
 
             <style>{`
-                .ql-container.ql-snow { border: none !important; font-family: inherit; font-size: inherit; }
-                .ql-editor { padding: 0; min-height: fit-content; }
-                .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #eee !important; padding: 4px 0; }
+                /* Print & Scrollbar refinements that don't fit in Tailwind Plugin */
                 @media print {
                     .print\\:hidden { display: none !important; }
                     .print\\:block { display: block !important; }
@@ -463,9 +432,8 @@ const Editor: React.FC = () => {
                     .page-break-fix { min-height: 100vh; height: auto; overflow: visible; }
                     .break-inside-avoid { break-inside: avoid; }
                 }
-                /* Hide scrollbar for cleaner UI */
                 ::-webkit-scrollbar { width: 6px; height: 6px; }
-                ::-webkit-scrollbar-thumb { bg-gray-300; border-radius: 3px; }
+                ::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 3px; }
             `}</style>
         </div>
     );

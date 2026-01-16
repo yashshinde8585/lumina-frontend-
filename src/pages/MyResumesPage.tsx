@@ -10,18 +10,7 @@ import { Resume } from '../types';
 import MyResumes from '../components/dashboard/MyResumes';
 import { Logo } from '../components/Logo';
 
-const getResumeStatus = (_resumeId: number): { columnId: string; title: string; color: string } | null => {
 
-    try {
-        const savedColumns = localStorage.getItem('jobColumns');
-        if (savedColumns) {
-            return null;
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    return null;
-};
 
 const MyResumesPage = () => {
     const navigate = useNavigate();
@@ -72,13 +61,23 @@ const MyResumesPage = () => {
     const handleDelete = async (id: number) => {
         if (confirm('Are you sure you want to delete this resume?')) {
             try {
+                // Delete from backend/Cloudinary
+                await resumeService.deleteResume(id);
+
                 const updatedResumes = resumes.filter(r => r.id !== id);
                 setResumes(updatedResumes);
                 localStorage.setItem('savedResumes', JSON.stringify(updatedResumes));
 
                 toast.success('Resume deleted successfully');
             } catch (error) {
-                toast.error('Failed to delete resume');
+                console.error('Failed to delete resume:', error);
+
+                // Fallback: still delete locally if backend fails but maybe show error
+                const updatedResumes = resumes.filter(r => r.id !== id);
+                setResumes(updatedResumes);
+                localStorage.setItem('savedResumes', JSON.stringify(updatedResumes));
+
+                toast.success('Resume removed locally (Server delete failed)');
             }
         }
     };
@@ -91,7 +90,7 @@ const MyResumesPage = () => {
         <div className="min-h-screen bg-gradient-to-br from-mist via-white to-blue-50/30">
             {/* Header */}
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-silver shadow-sm">
-                <div className="w-full px-6 py-4 flex justify-between items-center">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <Button variant="ghost" size="sm" className="mr-2 flex flex-row items-center gap-2">
                             <ArrowLeft size={16} /> Back to Dashboard
@@ -107,7 +106,7 @@ const MyResumesPage = () => {
                 </div>
             </header>
 
-            <main className="w-full px-6 py-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <MyResumes
                     resumes={resumes}
                     loading={loading}
@@ -119,7 +118,7 @@ const MyResumesPage = () => {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onRename={handleRename}
-                    getResumeStatus={getResumeStatus}
+
                 />
             </main>
         </div>

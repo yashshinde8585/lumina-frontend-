@@ -1,8 +1,11 @@
 import React from 'react';
 import HomeNavbar from '../components/home/HomeNavbar';
 import HomeHero from '../components/home/HomeHero';
+import HomeFeatureShowcase from '../components/home/HomeFeatureShowcase';
+
 import HomeHowItWorks from '../components/home/HomeHowItWorks';
-import HomeFeatures from '../components/home/HomeFeatures';
+import HomeFooter from '../components/home/HomeFooter';
+
 
 const Home = () => {
     return (
@@ -12,8 +15,11 @@ const Home = () => {
 
             <HomeNavbar />
             <HomeHero />
+            <HomeFeatureShowcase />
+
             <HomeHowItWorks />
-            <HomeFeatures />
+            <HomeFooter />
+
         </div>
     );
 };
