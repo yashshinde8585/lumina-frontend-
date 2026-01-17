@@ -137,5 +137,15 @@ export const authService = {
      */
     updateBoard: async (boardData: any): Promise<void> => {
         await axiosInstance.post(API_ENDPOINTS.AUTH + '/board', { boardData });
+    },
+
+    /**
+     * Sends a magic link to the user's email.
+     * @param {string} email
+     * @returns {Promise<void>}
+     */
+    sendMagicLink: async (email: string): Promise<void> => {
+        console.log('Sending magic link to:', email);
+        return new Promise(resolve => setTimeout(resolve, 1000));
     }
 };

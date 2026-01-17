@@ -110,7 +110,7 @@ const HomeHero = () => {
                                     <div className="w-3 h-3 rounded-full bg-yellow-400/80"></div>
                                     <div className="w-3 h-3 rounded-full bg-green-400/80"></div>
                                 </div>
-                                <div className="text-[10px] bg-white border border-gray-200 text-gray-400 px-3 py-0.5 rounded-full mx-auto font-mono hidden sm:block">resume-ai-editor.tsx</div>
+                                <div className="text-[10px] bg-white border border-gray-200 text-gray-400 px-3 py-0.5 rounded-full mx-auto font-mono hidden sm:block">lumina-editor.tsx</div>
                             </div>
 
                             {/* UI Body */}

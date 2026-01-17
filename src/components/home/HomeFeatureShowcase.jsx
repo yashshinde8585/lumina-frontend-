@@ -132,13 +132,7 @@ const HomeFeatureShowcase = () => {
                 </div>
 
                 {/* Bottom CTA */}
-                <div className="mt-16 text-center">
-                    <Link to="/signup">
-                        <button className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                            Explore all features <ArrowRight size={16} />
-                        </button>
-                    </Link>
-                </div>
+
 
             </div>
         </section>

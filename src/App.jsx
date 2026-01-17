@@ -16,6 +16,8 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const JobDetails = lazy(() => import('./pages/JobDetails'));
 const MyResumesPage = lazy(() => import('./pages/MyResumesPage'));
 const AccountProfile = lazy(() => import('./pages/AccountProfile'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -42,6 +44,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
 
                 {/* Protected User Routes */}
                 <Route path="/dashboard" element={
@@ -91,6 +94,7 @@ function App() {
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </div>

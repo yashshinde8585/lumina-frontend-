@@ -23,7 +23,6 @@ import JobDetailsDrawer from '../components/dashboard/JobDetailsDrawer';
 import { SortableJobCard } from '../components/dashboard/board/SortableJobCard';
 
 
-import { useResume } from '../context/ResumeContext';
 import { authService } from '../services/authService';
 import { resumeService } from '../services/resumeService';
 import { TRACKING_COLUMNS, INITIAL_COLUMNS } from '../utils/constants';
@@ -31,7 +30,7 @@ import { Resume, JobCard, BoardColumn } from '../types';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { } = useResume();
+    // const { } = useResume(); // Context available if needed
     const [resumes, setResumes] = useState<Resume[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name: string, email: string } | null>(null);
@@ -80,6 +79,7 @@ const Dashboard = () => {
     // DnD State
     const [activeDragItem, setActiveDragItem] = useState<JobCard | Resume | null>(null);
     const [activeDragType, setActiveDragType] = useState<'JOB' | 'RESUME' | null>(null);
+    const [activeDragColumnId, setActiveDragColumnId] = useState<string | null>(null);
 
     // Smart Drop State
     const [dropModalOpen, setDropModalOpen] = useState(false);
@@ -155,7 +155,7 @@ const Dashboard = () => {
                     const savedResumes = localStorage.getItem('savedResumes');
                     if (savedResumes) {
                         setResumes(JSON.parse(savedResumes));
-                        toast.info('Loaded resumes from local storage');
+                        toast.info('Resumes loaded from offline storage.');
                     }
                 }
 
@@ -244,6 +244,7 @@ const Dashboard = () => {
         if (type === 'JOB') {
             setActiveDragType('JOB');
             setActiveDragItem(item);
+            setActiveDragColumnId(active.data.current?.columnId);
         } else if (type === 'RESUME') {
             setActiveDragType('RESUME');
             setActiveDragItem(item);
@@ -324,6 +325,7 @@ const Dashboard = () => {
         // Reset state
         setActiveDragItem(null);
         setActiveDragType(null);
+        setActiveDragColumnId(null);
 
         if (!over) return;
 
@@ -377,7 +379,7 @@ const Dashboard = () => {
             const overId = over.id as string;
             const activeColumnId = findColumn(activeId);
             const overColumnId = findColumn(overId);
-            const initialColumnId = active.data.current.columnId;
+            const initialColumnId = activeDragColumnId;
 
             // Toast for Drag & Drop Move
             if (activeColumnId && initialColumnId && activeColumnId !== initialColumnId) {
@@ -391,7 +393,7 @@ const Dashboard = () => {
                         case 'interview': return `Interview round confirmed with ${company}.`;
                         case 'offer': return `Congratulations! Offer received from ${company}.`;
                         case 'rejected': return `Application for ${company} has been closed.`;
-                        default: return `Moved ${company} to ${activeColumnId}`;
+                        default: return `**${company}** moved to **${activeColumnId}** stage.`;
                     }
                 };
                 toast.success(getToastMessage(activeColumnId, companyName));
@@ -441,7 +443,7 @@ const Dashboard = () => {
             return col;
         }));
 
-        toast.success(`Applied to ${newJobCompany} using "${dropData.resumeTitle}"!`);
+        toast.success(`Application created for **${newJobCompany}**!`);
         setDropModalOpen(false);
         setDropData(null);
     };
@@ -608,7 +610,7 @@ const Dashboard = () => {
                                     <Button
                                         disabled={!tailorJobData.job.description}
                                         onClick={() => {
-                                            toast.success("Navigating to AI Editor...");
+                                            toast.success("Opening the AI Editor...");
                                             // Mock navigation - in real app pass state
                                             navigate('/editor', {
                                                 state: {

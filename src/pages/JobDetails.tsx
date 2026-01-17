@@ -64,6 +64,7 @@ const JobDetailsPage: React.FC = () => {
 
     React.useEffect(() => {
         document.title = 'Job Application Details';
+        setTimeout(() => window.scrollTo(0, 0), 0);
     }, []);
 
     React.useEffect(() => {
@@ -215,7 +216,7 @@ const JobDetailsPage: React.FC = () => {
             }
         }
 
-        toast.success("Application deleted");
+        toast.success("Application removed from your board.");
         navigate('/dashboard');
     };
 
@@ -243,7 +244,7 @@ const JobDetailsPage: React.FC = () => {
         });
 
         if (!foundJob) {
-            toast.error("Could not update status");
+            toast.error("We couldn't update the status. Please try again.");
             return;
         }
 
@@ -293,7 +294,7 @@ const JobDetailsPage: React.FC = () => {
         // Update URL state so reload preserves new data
         navigate(location.pathname, { state: { job: updatedJob }, replace: true });
 
-        toast.success(`Status updated to ${newColTitle}`);
+        toast.success(`Moved to **${newColTitle}** stage.`);
     };
 
     const confirmStatusUpdate = () => {
@@ -359,7 +360,7 @@ const JobDetailsPage: React.FC = () => {
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                toast.success('Download started');
+                toast.success('Downloading your resume...');
             } else {
                 // Fallback
                 let downloadUrl = resumeToDownload.url;
@@ -587,18 +588,24 @@ const JobDetailsPage: React.FC = () => {
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                             {/* Company Logo - Large & Soft */}
                             <div className={`w-20 h-20 rounded-[1.25rem] bg-${status.color || 'blue'}-50/50 flex items-center justify-center border border-${status.color || 'blue'}-100/50 overflow-hidden shrink-0 shadow-[0_4px_20px_-12px_rgba(0,0,0,0.1)] p-4`}>
-                                <img
-                                    src={`https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s/g, '')}.com`}
-                                    alt={job.company}
-                                    className="w-full h-full object-contain"
-                                    onError={(e) => {
-                                        // Fallback to initial
-                                        const parent = (e.target as HTMLImageElement).parentElement;
-                                        if (parent) {
-                                            parent.innerHTML = `<span class="text-2xl font-bold text-${status.color || 'blue'}-300">${job.company.charAt(0)}</span>`;
-                                        }
-                                    }}
-                                />
+                                {job.company && job.company.toLowerCase().replace(/\s/g, '') !== 'companyname' ? (
+                                    <img
+                                        src={`https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s/g, '')}.com`}
+                                        alt={job.company}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                            // Fallback to initial
+                                            const parent = (e.target as HTMLImageElement).parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `<span class="text-2xl font-bold text-${status.color || 'blue'}-300">${job.company.charAt(0)}</span>`;
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <span className={`text-2xl font-bold text-${status.color || 'blue'}-300`}>
+                                        {job.company.charAt(0)}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Job Identity */}
@@ -646,73 +653,69 @@ const JobDetailsPage: React.FC = () => {
 
                 {/* Progress Tracker - Interactive Milestone */}
                 <div className="mb-8 relative px-4">
-                    {/* Connecting Line Track */}
-                    <div className="absolute top-[37px] left-0 right-0 h-1.5 bg-gray-100 rounded-full z-0 hidden md:block mx-12"></div>
-
-                    {/* Active Progress Track Overlay */}
-                    <div
-                        className="absolute top-[37px] left-0 h-1.5 bg-blue-500 rounded-full z-0 hidden md:block mx-12 transition-all duration-500 ease-out"
-                        style={{
-                            width: (() => {
-                                const linearStages = ['saved', 'applied', 'screening', 'aptitude', 'technical', 'interview', 'offer', 'rejected'];
-                                const currentIndex = linearStages.indexOf(status.id);
-                                if (currentIndex === -1) return '0%';
-                                return `${(currentIndex / (linearStages.length - 1)) * 100}%`;
-                            })()
-                        }}
-                    ></div>
-
-                    <div className="relative z-10 flex items-center justify-start md:justify-between gap-8 md:gap-0 overflow-x-auto py-4 scrollbar-hide px-2">
+                    <div className="relative z-10 flex items-center justify-start md:justify-between gap-4 md:gap-0 overflow-x-auto py-4 scrollbar-hide px-2">
                         {(() => {
-                            const linearStages = ['saved', 'applied', 'screening', 'aptitude', 'technical', 'interview', 'offer', 'rejected'];
+                            const linearStages = ['applied', 'screening', 'aptitude', 'technical', 'interview', 'offer', 'rejected'];
+
+                            const checkVisited = (sid: string) => {
+                                const isHistoryAvailable = job.history && job.history.length > 0;
+                                return isHistoryAvailable
+                                    ? job.history?.some((h: any) => h.status === sid) || sid === status.id
+                                    : linearStages.indexOf(status.id) >= linearStages.indexOf(sid);
+                            };
 
                             return linearStages.map((cid, index) => {
                                 const col = INITIAL_COLUMNS.find(c => c.id === cid);
                                 if (!col) return null;
                                 const isActive = cid === status.id;
-                                const isLogicallyPast = linearStages.indexOf(status.id) >= index;
+                                const isVisited = checkVisited(cid);
+
+
 
                                 return (
-                                    <button
-                                        key={cid}
-                                        onClick={() => {
-                                            if (!isActive) {
-                                                setPendingStatusId(cid);
-                                                setShowStatusConfirm(true);
-                                            }
-                                        }}
-                                        className={`flex flex-col items-center gap-3 group min-w-[80px] cursor-pointer transition-all duration-300 relative`}
-                                    >
-                                        <div className={`
+                                    <React.Fragment key={cid}>
+                                        <button
+                                            onClick={() => {
+                                                if (!isActive) {
+                                                    setPendingStatusId(cid);
+                                                    setShowStatusConfirm(true);
+                                                }
+                                            }}
+                                            className={`flex flex-col items-center gap-3 group min-w-[80px] cursor-pointer transition-all duration-300 relative flex-shrink-0`}
+                                        >
+                                            <div className={`
                                             w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm z-10 border-[3px]
                                             ${isActive
-                                                ? `bg-white border-${col.color}-500 text-${col.color}-600 scale-110 shadow-[0_0_0_4px_rgba(59,130,246,0.1)]` // Glow effect
-                                                : isLogicallyPast
-                                                    ? 'bg-blue-500 border-blue-500 text-white' // Completed state
-                                                    : 'bg-white border-gray-200 text-gray-300 hover:border-gray-300' // Future state
-                                            }
-                                        `}>
-                                            {(() => {
-                                                switch (cid) {
-                                                    case 'saved': return <Clock size={isActive ? 20 : 18} />;
-                                                    case 'applied': return <Send size={isActive ? 20 : 18} />;
-                                                    case 'screening': return <Search size={isActive ? 20 : 18} />;
-                                                    case 'aptitude': return <Calculator size={isActive ? 20 : 18} />;
-                                                    case 'technical': return <Code size={isActive ? 20 : 18} />;
-                                                    case 'interview': return <Users size={isActive ? 20 : 18} />;
-                                                    case 'offer': return <Briefcase size={isActive ? 20 : 18} />;
-                                                    case 'rejected': return <XCircle size={isActive ? 20 : 18} />;
-                                                    default: return <FileText size={isActive ? 20 : 18} />;
+                                                    ? `bg-white border-${col.color}-500 text-${col.color}-600 scale-110 shadow-[0_0_0_4px_rgba(59,130,246,0.1)] animate-pulse` // Glow effect
+                                                    : isVisited
+                                                        ? 'bg-blue-500 border-blue-500 text-white' // Completed state
+                                                        : 'bg-white border-gray-200 text-gray-300 hover:border-gray-300' // Future state
                                                 }
-                                            })()}
-                                        </div>
-                                        <span className={`
-                                            text-[11px] font-bold uppercase tracking-wider text-center whitespace-nowrap px-2 py-1 rounded-lg transition-colors
-                                            ${isActive ? `text-${col.color}-700 bg-${col.color}-50` : isLogicallyPast ? 'text-gray-900 font-semibold' : 'text-gray-400 font-medium'}
                                         `}>
-                                            {col.id === 'saved' ? 'Wishlist' : col.title}
-                                        </span>
-                                    </button>
+                                                {(() => {
+                                                    switch (cid) {
+                                                        case 'saved': return <Clock size={isActive ? 20 : 18} />;
+                                                        case 'applied': return <Send size={isActive ? 20 : 18} />;
+                                                        case 'screening': return <Search size={isActive ? 20 : 18} />;
+                                                        case 'aptitude': return <Calculator size={isActive ? 20 : 18} />;
+                                                        case 'technical': return <Code size={isActive ? 20 : 18} />;
+                                                        case 'interview': return <Users size={isActive ? 20 : 18} />;
+                                                        case 'offer': return <Briefcase size={isActive ? 20 : 18} />;
+                                                        case 'rejected': return <XCircle size={isActive ? 20 : 18} />;
+                                                        default: return <FileText size={isActive ? 20 : 18} />;
+                                                    }
+                                                })()}
+                                            </div>
+                                            <span className={`
+                                            text-[11px] font-bold uppercase tracking-wider text-center whitespace-nowrap px-2 py-1 rounded-lg transition-colors
+                                            ${isActive ? `text-${col.color}-700 bg-${col.color}-50` : isVisited ? 'text-gray-900 font-semibold' : 'text-gray-400 font-medium'}
+                                        `}>
+                                                {col.id === 'saved' ? 'Wishlist' : col.title}
+                                            </span>
+                                        </button>
+
+
+                                    </React.Fragment>
                                 );
                             });
                         })()}
@@ -729,8 +732,8 @@ const JobDetailsPage: React.FC = () => {
                     {/* Left Column: Notes & Input (70%) */}
                     <div className="lg:col-span-8 space-y-6">
                         {/* Personal Notes - The Workspace */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-0 overflow-hidden relative group">
-                            <div className="flex items-center justify-between p-4 border-b border-gray-50 bg-gray-50/50">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0 overflow-hidden relative group">
+                            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
                                 <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                                     <CheckSquare size={16} className="text-gray-500" /> Personal Notes
                                 </h3>
