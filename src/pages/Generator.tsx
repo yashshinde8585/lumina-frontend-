@@ -76,7 +76,7 @@ const Generator: React.FC = () => {
                 return;
             }
             setSelectedFile(file);
-            toast.success("Resume attached!");
+            // toast.success("Resume attached!");
         }
     };
 
@@ -97,7 +97,7 @@ const Generator: React.FC = () => {
                     const response = await resumeService.importResume(selectedFile);
                     if (response && response.resume && response.resume.id) {
                         linkedResumeId = response.resume.id;
-                        toast.success("Resume uploaded and linked!");
+                        // toast.success("Resume uploaded and linked!");
                     }
                 } catch (error) {
                     console.error("Failed to upload resume:", error);
@@ -114,7 +114,7 @@ const Generator: React.FC = () => {
                 date: new Date(),
                 linkedResumeId: linkedResumeId,
                 history: [{
-                    status: 'applied',
+                    status: 'saved',
                     date: new Date().toISOString(),
                     type: 'manual'
                 }],
@@ -145,10 +145,6 @@ const Generator: React.FC = () => {
                 if (saved) {
                     columns = JSON.parse(saved);
                 } else {
-                    // Import INITIAL_COLUMNS dynamically to avoid circular dependencies if possible, 
-                    // or just assume we have imported it.
-                    // Since we can't easily dynamic import here without async, we assume it's imported or we manually construct.
-                    // For safety, let's assume valid structure exists or init simple one.
                     columns = [
                         { id: 'saved', title: 'Wishlist / Saved', items: [] },
                         { id: 'applied', title: 'Applied Jobs', items: [] },
@@ -158,7 +154,7 @@ const Generator: React.FC = () => {
             }
 
             // Find 'applied' column or fallback to first
-            const targetColId = 'applied';
+            const targetColId = 'saved';
             const colIndex = columns.findIndex((c: any) => c.id === targetColId);
 
             if (colIndex !== -1) {
@@ -174,7 +170,7 @@ const Generator: React.FC = () => {
                 await authService.updateBoard(columns);
             }
 
-            toast.success(`Tracked application for ${companyName}!`);
+            toast.success("Job added to wishlist.");
 
             // Reset form
             setCompanyName('');

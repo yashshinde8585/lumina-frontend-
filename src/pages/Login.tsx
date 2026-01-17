@@ -37,10 +37,10 @@ const Login: React.FC = () => {
         setIsLoading(true);
         try {
             const user = await authService.login(formData);
-            toast.success(`Welcome back, ${user.name}!`);
+            toast.success(`Welcome back, ${user.name}! It's great to see you again.`);
             navigate('/dashboard');
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Login failed. Please try again.';
+            const errorMsg = err.response?.data?.message || 'We couldn\'t log you in. Please check your email and password.';
             toast.error(errorMsg);
             setErrors({ form: errorMsg });
         } finally {
@@ -57,7 +57,7 @@ const Login: React.FC = () => {
                 navigate('/dashboard');
             } catch (err) {
                 console.error(err);
-                toast.error('Google login failed');
+                toast.error('Unable to sign in with Google. Please try again.');
             } finally {
                 setIsLoading(false);
             }
@@ -77,13 +77,13 @@ const Login: React.FC = () => {
 
             {/* LEFT PANEL: The "100X" Feature Wall */}
             <div className="hidden md:flex w-[45%] lg:w-[50%] bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 relative flex-col overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 contrast-125 mix-blend-overlay"></div>
+                <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20 contrast-125 mix-blend-overlay"></div>
 
                 {/* Branding on Left Panel */}
                 <div className="relative z-10 p-12 pb-0">
                     <div className="flex items-center gap-2 text-white/90">
                         <Logo size={32} variant="white" />
-                        <span className="font-bold text-xl tracking-tight">ResumeAI</span>
+                        <span className="font-bold text-xl tracking-tight">Lumina</span>
                     </div>
                     <div className="mt-8 max-w-md">
                         <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
@@ -225,18 +225,14 @@ const Login: React.FC = () => {
                                     )}
                                 </Button>
 
-                                <div className="text-center mt-6">
-                                    <button type="button" onClick={() => toast.info("Check your inbox for the magic link!")} className="text-sm font-medium text-slate-600 hover:text-slate-900 border-b border-dashed border-slate-300 hover:border-slate-600 transition-all">
-                                        Email me a magic link instead
-                                    </button>
-                                </div>
+
                             </form>
                         </motion.div>
                     </AnimatePresence>
                 </div>
 
                 <div className="absolute bottom-6 text-xs text-gray-400">
-                    © 2025 ResumeAI. Secure by automated magic.
+                    © 2025 Lumina. Secure by automated magic.
                 </div>
             </div>
         </div>

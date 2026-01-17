@@ -49,7 +49,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ user }) => {
                 {/* Left: Logo & Breadcrumbs */}
                 <div className="flex items-center gap-4">
                     <Link to="/" className="flex items-center gap-2 group">
-                        <Logo size={28} /> {/* Slightly smaller logo */}
+                        <Logo size={28} />
+                        <span className="font-bold text-xl tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors hidden sm:block">Lumina</span>
                     </Link>
 
                     {/* Divider */}
@@ -89,7 +90,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ user }) => {
                             className="relative flex items-center justify-center px-4 py-2 text-xs font-bold tracking-wide shadow-lg shadow-blue-500/25 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 text-white"
                         >
                             <Plus className="mr-1.5 h-3.5 w-3.5 stroke-[3]" />
-                            New App
+                            New Resume
                         </Button>
                     </div>
 

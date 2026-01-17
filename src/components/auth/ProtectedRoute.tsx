@@ -13,7 +13,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
 
     // In a real production app, you should decode the JWT to check the role/expiration.
     // For this MVP, we check the stored email as a proxy for the 'admin' role.
-    const isAdmin = authService.getUserEmail() === 'admin@resumeai.com';
+    const isAdmin = authService.getUserEmail() === 'admin@lumina.ai';
 
     if (!token) {
         // Redirect to login but save the attempted location

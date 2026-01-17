@@ -219,9 +219,33 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ columns, onFunnelCl
                                 <ResponsiveContainer width="100%" height={280} className="outline-none">
                                     <AreaChart data={velocityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
-                                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                            <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset={(() => {
+                                                    const dataMax = Math.max(...velocityData.map((i) => i.applications));
+                                                    if (dataMax <= 0) return 0;
+                                                    if (dataMax <= 3) return 0; // If max is less than target, all red
+                                                    return (dataMax - 3) / dataMax;
+                                                })()} stopColor="#22c55e" stopOpacity={1} />
+                                                <stop offset={(() => {
+                                                    const dataMax = Math.max(...velocityData.map((i) => i.applications));
+                                                    if (dataMax <= 0) return 0;
+                                                    if (dataMax <= 3) return 0;
+                                                    return (dataMax - 3) / dataMax;
+                                                })()} stopColor="#ef4444" stopOpacity={1} />
+                                            </linearGradient>
+                                            <linearGradient id="splitFill" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset={(() => {
+                                                    const dataMax = Math.max(...velocityData.map((i) => i.applications));
+                                                    if (dataMax <= 0) return 0;
+                                                    if (dataMax <= 3) return 0;
+                                                    return (dataMax - 3) / dataMax;
+                                                })()} stopColor="#22c55e" stopOpacity={0.2} />
+                                                <stop offset={(() => {
+                                                    const dataMax = Math.max(...velocityData.map((i) => i.applications));
+                                                    if (dataMax <= 0) return 0;
+                                                    if (dataMax <= 3) return 0;
+                                                    return (dataMax - 3) / dataMax;
+                                                })()} stopColor="#ef4444" stopOpacity={0.2} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
@@ -241,25 +265,29 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ columns, onFunnelCl
                                         <Tooltip
                                             content={({ active, payload, label }) => {
                                                 if (active && payload && payload.length) {
-                                                    const value = payload[0].value;
+                                                    const value = payload[0].value as number;
+                                                    const isTargetMet = value >= 3;
                                                     return (
                                                         <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl">
                                                             <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-8 bg-blue-500 rounded-full"></span>
+                                                                <span className={`w-1.5 h-8 rounded-full ${isTargetMet ? 'bg-green-500' : 'bg-red-500'}`}></span>
                                                                 <div>
                                                                     <p className="text-xl font-bold text-gray-900 leading-none">{value}</p>
                                                                     <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Applications</p>
                                                                 </div>
                                                             </div>
+                                                            <p className={`text-[10px] font-bold mt-2 ${isTargetMet ? 'text-green-600' : 'text-red-500'}`}>
+                                                                {isTargetMet ? 'Target Met! 🎉' : 'Target Not Met'}
+                                                            </p>
                                                         </div>
                                                     );
                                                 }
                                                 return null;
                                             }}
-                                            cursor={{ stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                            cursor={{ stroke: '#9CA3AF', strokeWidth: 1, strokeDasharray: '4 4' }}
                                         />
-                                        <ReferenceLine y={3} stroke="#E5E7EB" strokeDasharray="3 3">
+                                        <ReferenceLine y={3} stroke="#9CA3AF" strokeDasharray="3 3">
                                             <Label
                                                 content={({ viewBox }) => {
                                                     const { x, y, width } = viewBox as any;
@@ -274,10 +302,38 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ columns, onFunnelCl
                                         <Area
                                             type="monotone"
                                             dataKey="applications"
-                                            stroke="#3B82F6"
+                                            stroke="url(#splitColor)"
                                             strokeWidth={3}
-                                            fill="url(#colorGradient)"
-                                            activeDot={{ r: 6, strokeWidth: 4, stroke: '#FFFFFF', fill: '#3B82F6' }}
+                                            fill="url(#splitFill)"
+                                            dot={(props: any) => {
+                                                const { cx, cy, payload } = props;
+                                                const isTargetMet = payload.applications >= 3;
+                                                return (
+                                                    <circle
+                                                        key={payload.day}
+                                                        cx={cx}
+                                                        cy={cy}
+                                                        r={4}
+                                                        stroke="white"
+                                                        strokeWidth={2}
+                                                        fill={isTargetMet ? "#22c55e" : "#ef4444"}
+                                                    />
+                                                );
+                                            }}
+                                            activeDot={(props: any) => {
+                                                const { cx, cy, payload } = props;
+                                                const isTargetMet = payload.applications >= 3;
+                                                return (
+                                                    <circle
+                                                        cx={cx}
+                                                        cy={cy}
+                                                        r={6}
+                                                        stroke="white"
+                                                        strokeWidth={2}
+                                                        fill={isTargetMet ? "#22c55e" : "#ef4444"}
+                                                    />
+                                                );
+                                            }}
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>

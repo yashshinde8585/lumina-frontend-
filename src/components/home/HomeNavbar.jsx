@@ -31,7 +31,7 @@ const HomeNavbar = () => {
                 {/* Logo Area */}
                 <Link to="/" className="flex items-center gap-2">
                     <Logo size={28} />
-                    <span className="font-bold text-lg text-gray-900 tracking-tight">ResumeAI</span>
+                    <span className="font-bold text-lg text-gray-900 tracking-tight">Lumina</span>
                 </Link>
 
 
