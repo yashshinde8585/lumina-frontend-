@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { ResumeProvider } from './context/ResumeContext'; // Context Provider
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react';
