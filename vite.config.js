@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     host: true,
   },
+  // Ensure build output is clean
+  build: {
+    outDir: 'dist',
+  },
   test: {
     globals: true,
     environment: 'jsdom',
