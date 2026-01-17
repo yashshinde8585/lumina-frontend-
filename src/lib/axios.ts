@@ -1,7 +1,7 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
 const axiosInstance = axios.create({
-    baseURL: `http://${window.location.hostname}:5002/api`,
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
 });
 
 axiosInstance.interceptors.request.use(

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, AlertCircle, Clock, FileText, ArrowRight, Info, Trash2 } from 'lucide-react';
+import { DollarSign, Clock, FileText, ArrowRight, Trash2 } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { JobCard } from '../../../types';
@@ -18,8 +18,7 @@ export const SortableJobCard: React.FC<SortableJobCardProps> = ({
     columnId,
     onJobClick,
     onMoveToNext,
-    onDelete,
-    onStatusChange
+    onDelete
 }) => {
     // Determine status badge color/style
     const getStatusStyle = () => {
@@ -74,20 +73,30 @@ export const SortableJobCard: React.FC<SortableJobCardProps> = ({
         >
             <div className="flex items-start gap-3 mb-3">
                 {/* Auto-Fetched Logo */}
+                {/* Auto-Fetched Logo */}
                 <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                    <img
-                        src={`https://logo.clearbit.com/${item.company.toLowerCase().replace(/\s/g, '')}.com`}
-                        alt={item.company}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            ((e.target as HTMLImageElement).nextSibling as HTMLElement).style.display = 'flex';
-                        }}
-                    />
-                    <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-bold items-center justify-center text-sm">
-                        {item.company.substring(0, 2).toUpperCase()}
-                    </div>
+                    {item.company && item.company.toLowerCase().replace(/\s/g, '') !== 'companyname' ? (
+                        <>
+                            <img
+                                src={`https://logo.clearbit.com/${item.company.toLowerCase().replace(/\s/g, '')}.com`}
+                                alt={item.company}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    const nextSibling = (e.target as HTMLImageElement).nextSibling as HTMLElement;
+                                    if (nextSibling) nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-bold items-center justify-center text-sm" style={{ display: 'none' }}>
+                                {item.company.substring(0, 2).toUpperCase()}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-bold items-center justify-center text-sm">
+                            {item.company ? item.company.substring(0, 2).toUpperCase() : 'CO'}
+                        </div>
+                    )}
                 </div>
 
                 <div className="min-w-0 flex-1">

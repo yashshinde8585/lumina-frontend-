@@ -11,7 +11,7 @@ const HomeFeatures = () => {
                 {/* Section Header */}
                 <div className="mb-20 max-w-3xl">
                     <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-6 tracking-tight leading-tight">
-                        Why ResumeAI beats <br className="hidden md:block" />
+                        Why Lumina beats <br className="hidden md:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">traditional builders</span>
                     </h2>
                     <p className="text-lg text-gray-600 leading-relaxed">

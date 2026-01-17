@@ -462,7 +462,7 @@ const AdminDashboard = () => {
                         <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs">AD</div>
                         <div className="flex-1 overflow-hidden">
                             <div className="font-bold text-white text-xs truncate">Admin User</div>
-                            <div className="text-xs text-slate-500 truncate">admin@resumeai.com</div>
+                            <div className="text-xs text-slate-500 truncate">admin@lumina.ai</div>
                         </div>
                     </div>
                     <button
@@ -709,7 +709,7 @@ const AdminDashboard = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-charcoal mb-1">Admin Email</label>
-                                        <input type="email" value="admin@resumeai.com" className="w-full p-2 border border-silver rounded-lg text-sm bg-mist" readOnly />
+                                        <input type="email" value="admin@lumina.ai" className="w-full p-2 border border-silver rounded-lg text-sm bg-mist" readOnly />
                                     </div>
                                     <div className="flex items-center justify-between p-4 bg-mist rounded-lg border border-silver">
                                         <div>

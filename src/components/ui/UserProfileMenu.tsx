@@ -183,7 +183,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user }) => {
                             </button>
 
                             <p className="text-center text-xs text-gray-300 mt-8">
-                                ResumeAI v1.0.0
+                                Lumina v1.0.0
                             </p>
                         </div>
                     </div>

@@ -57,12 +57,12 @@ const Signup: React.FC = () => {
 
             // Wait for animation before redirect
             setTimeout(() => {
-                toast.success(`Welcome aboard, ${user.name}! 🎉`);
+                toast.success(`Welcome aboard, ${user.name}! Your journey begins now.`);
                 navigate('/dashboard');
             }, 2000);
 
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Signup failed. Please try again.';
+            const errorMsg = err.response?.data?.message || 'We couldn\'t create your account. Please try again.';
             toast.error(errorMsg);
             setErrors({ form: errorMsg });
             setIsLoading(false);
@@ -76,12 +76,12 @@ const Signup: React.FC = () => {
                 const user = await authService.loginWithGoogle(credentialResponse.credential);
                 setIsSuccess(true);
                 setTimeout(() => {
-                    toast.success(`Welcome aboard, ${user.name}! 🎉`);
+                    toast.success(`Welcome aboard, ${user.name}!`);
                     navigate('/dashboard');
                 }, 2000);
             } catch (err) {
                 console.error(err);
-                toast.error('Google signup failed');
+                toast.error('Unable to sign up with Google. Please try again.');
                 setIsLoading(false);
             }
         }
@@ -149,7 +149,7 @@ const Signup: React.FC = () => {
                 <div className="relative z-10 p-12 pb-0">
                     <div className="flex items-center gap-2 text-white/90">
                         <Logo size={32} variant="white" />
-                        <span className="font-bold text-xl tracking-tight">ResumeAI</span>
+                        <span className="font-bold text-xl tracking-tight">Lumina</span>
                     </div>
                     <div className="mt-8 max-w-md">
                         <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
