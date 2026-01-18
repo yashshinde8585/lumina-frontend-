@@ -40,9 +40,27 @@ const Login: React.FC = () => {
             toast.success(`Welcome back, ${user.name}! It's great to see you again.`);
             navigate('/dashboard');
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'We couldn\'t log you in. Please check your email and password.';
+            let errorMsg = err.response?.data?.message || 'Login failed. Check your details.';
+            const lowerMsg = errorMsg.toLowerCase();
+            const newErrors: Record<string, string> = {};
+
+            // Specific Field Errors
+            if (lowerMsg.includes('user not found')) {
+                newErrors.email = "Account not found.";
+                errorMsg = "Account not found.";
+            } else if (lowerMsg.includes('password') || lowerMsg.includes('credential')) {
+                newErrors.password = "Incorrect password.";
+                errorMsg = "Incorrect password.";
+            } else {
+                // Generic / Network Errors
+                if (lowerMsg.includes('network') || lowerMsg.includes('connection')) {
+                    errorMsg = "Connection failed.";
+                }
+                newErrors.form = errorMsg;
+            }
+
             toast.error(errorMsg);
-            setErrors({ form: errorMsg });
+            setErrors(newErrors);
         } finally {
             setIsLoading(false);
         }
@@ -92,8 +110,9 @@ const Login: React.FC = () => {
             <div className="w-full md:w-[55%] lg:w-[50%] flex flex-col items-center justify-center p-6 md:p-8 relative z-10 h-full">
                 {/* Mobile Header (Only visible on small screens) */}
                 <div className="absolute top-6 left-6 md:hidden">
-                    <Link to="/">
+                    <Link to="/" className="flex items-center gap-2">
                         <Logo size={32} />
+                        <span className="font-bold text-xl tracking-tight text-gray-900">Lumina</span>
                     </Link>
                 </div>
 

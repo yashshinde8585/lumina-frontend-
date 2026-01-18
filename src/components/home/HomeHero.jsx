@@ -5,7 +5,11 @@ import { FileText, User, Zap, Settings, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import ScoreCounter from './ScoreCounter';
 
+import { authService } from '../../services/authService';
+
 const HomeHero = () => {
+    const isLoggedIn = !!authService.getToken();
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 md:pt-28 md:pb-20 relative z-10 transition-all duration-300">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -51,7 +55,7 @@ const HomeHero = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-xl"
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-4 sm:gap-4 mb-8 w-full max-w-xl"
                     >
                         {/* Door A: Generate */}
                         <div onClick={() => toast.info("Upcoming Feature: AI Generation is currently under development to bring you the best experience!")} className="group relative">
@@ -71,15 +75,24 @@ const HomeHero = () => {
                         </div>
 
                         {/* Door B: Track */}
-                        <Link to="/dashboard" className="group">
-                            <div className="h-full bg-white hover:bg-gray-50 text-gray-900 rounded-xl p-4 cursor-pointer transition-all border border-gray-200 hover:border-blue-300 flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-gray-600 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors duration-300">
+                        <Link to="/dashboard" className="group relative block">
+                            {/* Click Hint - Only visible when logged in */}
+                            {isLoggedIn && (
+                                <div className="absolute -top-3 right-6 z-20 animate-bounce">
+                                    <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 border-2 border-white">
+                                        Click Here <ArrowRight size={10} className="rotate-90" />
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="h-full bg-white hover:bg-gray-50 text-gray-900 rounded-xl p-4 cursor-pointer transition-all border border-gray-200 hover:border-blue-300 flex items-center gap-4 relative ring-2 ring-blue-500/10 hover:ring-blue-500/50">
+                                <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0 text-blue-600 group-hover:scale-110 transition-transform duration-300">
                                     <FileText size={22} />
                                 </div>
                                 <div className="flex-1">
                                     <div className="font-bold text-base text-gray-900 flex items-center justify-between">
                                         Smart Job Tracker
-                                        <ArrowRight size={16} className="text-blue-500 -ml-2 opacity-0 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                                        <ArrowRight size={16} className="text-blue-500 opacity-100 group-hover:translate-x-1 transition-transform duration-300" />
                                     </div>
                                     <div className="text-gray-500 text-xs mt-1">A dedicated CRM for your career.</div>
                                 </div>
