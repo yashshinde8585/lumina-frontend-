@@ -1,6 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { authService, LoginCredentials } from '../services/authService';
-import { GoogleLogin } from '@react-oauth/google';
+
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { validators, validateForm } from '../utils/validation';
@@ -48,21 +48,7 @@ const Login: React.FC = () => {
         }
     };
 
-    const handleGoogleSuccess = async (credentialResponse: any) => {
-        if (credentialResponse.credential) {
-            setIsLoading(true);
-            try {
-                const user = await authService.loginWithGoogle(credentialResponse.credential);
-                toast.success(`Welcome back, ${user.name}!`);
-                navigate('/dashboard');
-            } catch (err) {
-                console.error(err);
-                toast.error('Unable to sign in with Google. Please try again.');
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    };
+
 
     return (
         <div className="h-screen w-full flex bg-gray-50 relative overflow-hidden font-sans">
@@ -81,10 +67,10 @@ const Login: React.FC = () => {
 
                 {/* Branding on Left Panel */}
                 <div className="relative z-10 p-12 pb-0">
-                    <div className="flex items-center gap-2 text-white/90">
+                    <Link to="/" className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
                         <Logo size={32} variant="white" />
                         <span className="font-bold text-xl tracking-tight">Lumina</span>
-                    </div>
+                    </Link>
                     <div className="mt-8 max-w-md">
                         <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
                             The Future of the <br />
@@ -106,7 +92,9 @@ const Login: React.FC = () => {
             <div className="w-full md:w-[55%] lg:w-[50%] flex flex-col items-center justify-center p-6 md:p-8 relative z-10 h-full">
                 {/* Mobile Header (Only visible on small screens) */}
                 <div className="absolute top-6 left-6 md:hidden">
-                    <Logo size={32} />
+                    <Link to="/">
+                        <Logo size={32} />
+                    </Link>
                 </div>
 
                 <div className="absolute top-6 right-6 flex items-center gap-2">
@@ -131,28 +119,7 @@ const Login: React.FC = () => {
                             </div>
 
                             {/* Social First Approach */}
-                            <div className="mb-4">
-                                <div className="w-full h-[40px] flex justify-center [&>div]:w-full [&>div]:!h-full [&_iframe]:!h-full">
-                                    <GoogleLogin
-                                        onSuccess={handleGoogleSuccess}
-                                        onError={() => toast.error('Google Sign-In failed')}
-                                        theme="outline"
-                                        size="large"
-                                        width="100%"
-                                        text="continue_with"
-                                        shape="rectangular"
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="relative mb-5">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-200"></div>
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase text-gray-400 bg-gray-50 px-2 font-medium tracking-wider">
-                                    Or continue with email
-                                </div>
-                            </div>
 
                             <form onSubmit={handleLogin} className="space-y-4">
                                 {errors.form && (

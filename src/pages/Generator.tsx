@@ -192,12 +192,12 @@ const Generator: React.FC = () => {
     // const jdBorderColor = jd.length === 0 ? 'border-gray-200 focus:ring-blue-500/20' : (jd.length < 50 ? 'border-orange-300 focus:ring-orange-200' : 'border-green-300 focus:ring-green-200');
 
     return (
-        <div className="h-screen bg-slate-50 relative overflow-hidden flex flex-col items-center justify-center p-4 selection:bg-blue-100 selection:text-blue-900">
-            {/* Simple Header Breadcrumb */}
+        <div className="min-h-screen bg-slate-50 relative flex flex-col items-center p-4 py-8 md:justify-center selection:bg-blue-100 selection:text-blue-900 overflow-y-auto">
+            {/* Simple Header Breadcrumb - Moved into flow to prevent overlap */}
             <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="absolute top-6 left-6 md:left-10 z-20"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-3xl mb-6 z-20"
             >
                 <button
                     onClick={() => navigate('/')}
@@ -275,9 +275,11 @@ const Generator: React.FC = () => {
                                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                             />
                                         )}
-                                        <span className="relative z-10 flex items-center gap-2">
-                                            Generate with AI
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-transparent text-purple-600 border border-purple-200">Upcoming</span>
+                                        <span className="relative z-10 flex items-center gap-1.5 sm:gap-2 justify-center">
+                                            <span className="sm:hidden">AI Gen</span>
+                                            <span className="hidden sm:inline">Generate with AI</span>
+                                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-transparent text-purple-600 border border-purple-200 sm:hidden">Soon</span>
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-transparent text-purple-600 border border-purple-200 hidden sm:inline-block">Upcoming</span>
                                         </span>
                                     </button>
                                 </div>
