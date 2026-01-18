@@ -145,49 +145,54 @@ const Dashboard = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Fetch Resumes
-                try {
-                    const fetchedResumes = await resumeService.getAllResumes();
-                    setResumes(fetchedResumes);
-                } catch (error) {
-                    console.error('Failed to fetch resumes from backend:', error);
-                    // Fallback: Load from localStorage
-                    const savedResumes = localStorage.getItem('savedResumes');
-                    if (savedResumes) {
-                        setResumes(JSON.parse(savedResumes));
-                        toast.info('Resumes loaded from offline storage.');
-                    }
-                }
-
-                // 2. Fetch Board Data
-                if (authService.getToken()) {
-                    try {
-                        const backendBoard = await authService.getBoard();
-                        if (backendBoard && Array.isArray(backendBoard) && backendBoard.length > 0) {
-                            // Map and validate backend data
-                            const result = INITIAL_COLUMNS.map(initCol => {
-                                let savedCol = backendBoard.find((p: any) => p.id === initCol.id);
-                                if (!savedCol && initCol.id === 'interview') {
-                                    savedCol = backendBoard.find((p: any) => p.id === 'interviewing');
-                                }
-                                return { ...initCol, items: savedCol ? savedCol.items : [] };
-                            });
-
-                            // Ensure all items are preserved
-                            const resultItemIds = new Set(result.flatMap(c => c.items.map((i: any) => i.id)));
-                            const orphanedItems = backendBoard.flatMap((c: any) => c.items).filter((i: any) => !resultItemIds.has(i.id));
-
-                            if (orphanedItems.length > 0) {
-                                const savedIdx = result.findIndex(c => c.id === 'saved');
-                                if (savedIdx !== -1) {
-                                    result[savedIdx].items = [...result[savedIdx].items, ...orphanedItems];
-                                }
-                            }
-                            setColumns(result);
+                // Create promises for both requests immediately
+                const resumesPromise = resumeService.getAllResumes()
+                    .catch(error => {
+                        console.error('Failed to fetch resumes from backend:', error);
+                        // Fallback: Load from localStorage
+                        const savedResumes = localStorage.getItem('savedResumes');
+                        if (savedResumes) {
+                            toast.info('Resumes loaded from offline storage.');
+                            return JSON.parse(savedResumes);
                         }
-                    } catch (error) {
-                        console.error('Failed to fetch board from backend:', error);
+                        return [];
+                    });
+
+                const boardPromise = authService.getToken()
+                    ? authService.getBoard().catch(err => {
+                        console.error('Board fetch failed', err);
+                        return null;
+                    })
+                    : Promise.resolve(null);
+
+                // Await both in parallel
+                const [fetchedResumes, backendBoard] = await Promise.all([resumesPromise, boardPromise]);
+
+                // 1. Process Resumes
+                setResumes(fetchedResumes);
+
+                // 2. Process Board Data (if available)
+                if (backendBoard && Array.isArray(backendBoard) && backendBoard.length > 0) {
+                    // Map and validate backend data
+                    const result = INITIAL_COLUMNS.map(initCol => {
+                        let savedCol = backendBoard.find((p: any) => p.id === initCol.id);
+                        if (!savedCol && initCol.id === 'interview') {
+                            savedCol = backendBoard.find((p: any) => p.id === 'interviewing');
+                        }
+                        return { ...initCol, items: savedCol ? savedCol.items : [] };
+                    });
+
+                    // Ensure all items are preserved
+                    const resultItemIds = new Set(result.flatMap(c => c.items.map((i: any) => i.id)));
+                    const orphanedItems = backendBoard.flatMap((c: any) => c.items).filter((i: any) => !resultItemIds.has(i.id));
+
+                    if (orphanedItems.length > 0) {
+                        const savedIdx = result.findIndex(c => c.id === 'saved');
+                        if (savedIdx !== -1) {
+                            result[savedIdx].items = [...result[savedIdx].items, ...orphanedItems];
+                        }
                     }
+                    setColumns(result);
                 }
             } finally {
                 setLoading(false);
