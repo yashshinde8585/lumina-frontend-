@@ -64,7 +64,15 @@ const HomeNavbar = () => {
 
                 {/* Mobile Menu Toggle - REMOVED (kept profile for mobile) */}
                 <div className="md:hidden flex items-center gap-3">
-                    {isLoggedIn && <UserProfileMenu user={user} />}
+                    {isLoggedIn ? (
+                        <UserProfileMenu user={user} />
+                    ) : (
+                        <Link to="/login">
+                            <Button className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                                Log In
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             </div>
 

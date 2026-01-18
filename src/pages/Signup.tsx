@@ -156,8 +156,9 @@ const Signup: React.FC = () => {
             <div className="w-full md:w-[55%] lg:w-[55%] flex flex-col items-center justify-center p-6 md:p-8 relative z-10 h-full">
                 {/* Mobile Header */}
                 <div className="absolute top-6 left-6 md:hidden">
-                    <Link to="/">
+                    <Link to="/" className="flex items-center gap-2">
                         <Logo size={32} />
+                        <span className="font-bold text-xl tracking-tight text-gray-900">Lumina</span>
                     </Link>
                 </div>
 
