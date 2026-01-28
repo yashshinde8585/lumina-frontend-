@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LayoutDashboard } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { Button } from '../ui/Button';
 import { Logo } from '../Logo';
@@ -40,8 +40,9 @@ const HomeNavbar = () => {
                 <div className="hidden md:flex items-center gap-4">
                     {isLoggedIn ? (
                         <>
-                            <Link to="/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                                Dashboard
+                            <Link to="/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                <LayoutDashboard size={18} />
+                                <span>Dashboard</span>
                             </Link>
                             <UserProfileMenu user={user} />
                         </>
@@ -62,10 +63,16 @@ const HomeNavbar = () => {
                     )}
                 </div>
 
+
                 {/* Mobile Menu Toggle - REMOVED (kept profile for mobile) */}
                 <div className="md:hidden flex items-center gap-3">
                     {isLoggedIn ? (
-                        <UserProfileMenu user={user} />
+                        <>
+                            <Link to="/dashboard" className="p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                <LayoutDashboard size={20} />
+                            </Link>
+                            <UserProfileMenu user={user} />
+                        </>
                     ) : (
                         <Link to="/login">
                             <Button className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm rounded-lg px-4 py-2 text-sm font-medium transition-all">

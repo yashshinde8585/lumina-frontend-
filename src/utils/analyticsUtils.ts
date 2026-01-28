@@ -22,7 +22,7 @@ export function calculateVelocityData(columns: BoardColumn[], timeFilter: TimeFi
             const diff = day === 0 ? 6 : day - 1; // Calculate days back to Monday
             startDate.setDate(now.getDate() - diff); // Set to Monday
             loopCount = 6; // 0 to 6 = 7 days
-            dateFormat = { weekday: 'short' };
+            dateFormat = { weekday: 'short', day: 'numeric', month: 'short' };
             break;
         case '30days':
             startDate.setDate(now.getDate() - 29);
@@ -51,7 +51,13 @@ export function calculateVelocityData(columns: BoardColumn[], timeFilter: TimeFi
     };
 
     // 3. Create map of dates in range
-    const chartData: { fullDate: string, day: string, applications: number }[] = [];
+    const chartData: {
+        fullDate: string,
+        dayShort: string,  // For mobile: just weekday
+        day: string,       // For desktop: full format
+        applications: number,
+        upcomingRounds: Array<{ type: string, company: string, notes?: string }>
+    }[] = [];
 
     // Initialize all days in range with 0
     for (let i = 0; i <= loopCount; i++) {
@@ -61,11 +67,14 @@ export function calculateVelocityData(columns: BoardColumn[], timeFilter: TimeFi
 
         // Format label for display
         const label = new Intl.DateTimeFormat('en-US', dateFormat).format(d);
+        const shortLabel = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
 
         chartData.push({
             fullDate: key,
+            dayShort: shortLabel,
             day: label,
-            applications: 0
+            applications: 0,
+            upcomingRounds: []
         });
     }
 
@@ -82,7 +91,27 @@ export function calculateVelocityData(columns: BoardColumn[], timeFilter: TimeFi
         if (index !== -1) {
             chartData[index].applications += 1;
         }
+
+        // Add upcoming rounds to the chart
+        if (job.upcomingRounds && job.upcomingRounds.length > 0) {
+            job.upcomingRounds.forEach(round => {
+                const roundDate = new Date(round.scheduledDate);
+                if (isNaN(roundDate.getTime())) return;
+
+                const roundKey = getLocalDateKey(roundDate);
+                const roundIndex = chartData.findIndex(d => d.fullDate === roundKey);
+
+                if (roundIndex !== -1) {
+                    chartData[roundIndex].upcomingRounds.push({
+                        type: round.type,
+                        company: job.company,
+                        notes: round.notes
+                    });
+                }
+            });
+        }
     });
 
     return chartData;
 }
+
