@@ -13,12 +13,10 @@ interface JobBoardProps {
     onJobClick: (job: JobCard) => void;
     highlightColumnId?: string | null;
     children?: React.ReactNode;
+    onScheduleRound?: (job: JobCard, columnId: string) => void;
 }
 
-const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, highlightColumnId, children }) => {
-    const [quickAddCol, setQuickAddCol] = useState<string | null>(null);
-    const [newJobCompany, setNewJobCompany] = useState('');
-
+const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, highlightColumnId, children, onScheduleRound }) => {
     // Filters State
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFilter, setDateFilter] = useState<'all' | '7days' | '30days'>('all');
@@ -57,33 +55,6 @@ const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, hi
                 return true;
             })
         })), [columns, visibleColumnIds, searchQuery, resumeFilter, dateFilter]);
-
-    const handleAddCard = useCallback((colId: string) => {
-        setQuickAddCol(colId);
-        setNewJobCompany('');
-    }, []);
-
-    const submitQuickAdd = useCallback((colId: string) => {
-        if (!newJobCompany.trim()) return;
-
-        const newCard: JobCard = {
-            id: Date.now().toString(),
-            company: newJobCompany,
-            role: 'New Role',
-            date: new Date()
-        };
-
-        setColumns(prev => prev.map(col => {
-            if (col.id === colId) {
-                return { ...col, items: [newCard, ...col.items] };
-            }
-            return col;
-        }));
-
-        setQuickAddCol(null);
-        setNewJobCompany('');
-        toast.success(`Added ${newJobCompany} to column`);
-    }, [newJobCompany, setColumns]);
 
     const handleMoveToNext = useCallback((item: JobCard, currentColumnId: string) => {
         const columnOrder = COLUMN_ORDER;
@@ -143,7 +114,13 @@ const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, hi
         };
 
         toast.success(getToastMessage(nextColumnId, item.company));
-    }, [setColumns]);
+
+        // Check if we should ask to schedule a round
+        const roundTypes = ['aptitude', 'technical', 'interview', 'screening'];
+        if (roundTypes.includes(nextColumnId) && onScheduleRound) {
+            onScheduleRound(item, nextColumnId);
+        }
+    }, [setColumns, onScheduleRound]);
 
     const handleDeleteJob = useCallback((jobId: string) => {
         // Find the job to see if it has a linked resume
@@ -210,26 +187,23 @@ const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, hi
 
     return (
         <div id="job-board" className="mt-8 mb-8">
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between px-2 mb-6 gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        Applications Board
-                    </h2>
-                    <p className="text-gray-500 text-sm mt-1">Track every job from saved to offer in one place.</p>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between px-1 sm:px-2 mb-6 gap-4 sm:gap-4">
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+                    Applications Board
+                </h2>
 
                 {/* Filter Bar */}
                 <div
-                    className="w-full md:w-auto flex flex-row items-center gap-3"
+                    className="w-full sm:w-auto flex flex-row items-center justify-between sm:justify-end gap-3"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Search */}
-                    <div className="relative flex-1 md:w-64">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <div className="relative flex-1 sm:w-60">
+                        <Search size={16} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search..."
-                            className="w-full pl-9 pr-3 py-2 text-sm border-none bg-white shadow-sm ring-1 ring-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium placeholder:text-gray-400"
+                            className="w-full pl-8 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 text-sm border-none bg-white shadow-sm ring-1 ring-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium placeholder:text-gray-400"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -252,9 +226,9 @@ const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, hi
                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                     <div className="p-1 space-y-0.5">
                                         {[
-                                            { value: 'all', label: 'All Dates' },
-                                            { value: '7days', label: 'Last 7 Days' },
-                                            { value: '30days', label: 'Last 30 Days' }
+                                            { value: 'all', label: 'All Time Overview' },
+                                            { value: '7days', label: 'Past 7 Days' },
+                                            { value: '30days', label: 'Past 30 Days' }
                                         ].map((option) => (
                                             <button
                                                 key={option.value}
@@ -355,12 +329,6 @@ const JobBoard: React.FC<JobBoardProps> = ({ columns, setColumns, onJobClick, hi
                                 col={col}
                                 highlightColumnId={highlightColumnId || null}
                                 onJobClick={onJobClick}
-                                handleAddCard={handleAddCard}
-                                submitQuickAdd={submitQuickAdd}
-                                quickAddCol={quickAddCol}
-                                setQuickAddCol={setQuickAddCol}
-                                newJobCompany={newJobCompany}
-                                setNewJobCompany={setNewJobCompany}
                                 onMoveToNext={handleMoveToNext}
                                 onDeleteJob={handleDeleteJob}
                                 onStatusChange={handleStatusChange}

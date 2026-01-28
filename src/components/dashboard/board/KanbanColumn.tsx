@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { motion } from 'framer-motion';
 import {
     Clock, Briefcase, LayoutList, Calculator, Code,
-    AlertCircle, CheckCircle, XCircle, Building, Plus, X, FileText
+    AlertCircle, CheckCircle, XCircle, Building, Plus, FileText
 } from 'lucide-react';
 import { SortableJobCard } from './SortableJobCard';
 import { BoardColumn, JobCard } from '../../../types';
@@ -14,12 +14,6 @@ interface KanbanColumnProps {
     col: BoardColumn;
     highlightColumnId: string | null;
     onJobClick: (job: JobCard) => void;
-    handleAddCard: (id: string) => void;
-    submitQuickAdd: (id: string) => void;
-    quickAddCol: string | null;
-    setQuickAddCol: (id: string | null) => void;
-    newJobCompany: string;
-    setNewJobCompany: (val: string) => void;
     onMoveToNext?: (item: JobCard, currentColumnId: string) => void;
     onDeleteJob?: (id: string) => void;
     onStatusChange?: (item: JobCard, oldCol: string, newCol: string) => void;
@@ -27,8 +21,7 @@ interface KanbanColumnProps {
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     col, highlightColumnId, onJobClick,
-    handleAddCard, submitQuickAdd, quickAddCol, setQuickAddCol,
-    newJobCompany, setNewJobCompany, onMoveToNext, onDeleteJob, onStatusChange
+    onMoveToNext, onDeleteJob, onStatusChange
 }) => {
     const navigate = useNavigate();
 
@@ -83,7 +76,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                             <FileText size={15} />
                         </button>
                     )}
-                    <button onClick={() => handleAddCard(col.id)} className="p-1 hover:bg-mist rounded text-steel hover:text-charcoal"><Plus size={14} /></button>
                 </div>
             </div>
 
@@ -94,24 +86,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     items={col.items.map(i => i.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    {/* Quick Add */}
-                    {quickAddCol === col.id && (
-                        <div className="bg-white p-3 rounded-lg border-2 border-blue-100 shadow-sm">
-                            <input
-                                autoFocus
-                                type="text"
-                                placeholder="Company..."
-                                className="w-full text-sm border border-silver rounded px-2 py-1 mb-2"
-                                value={newJobCompany}
-                                onChange={(e) => setNewJobCompany(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && submitQuickAdd(col.id)}
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button onClick={() => setQuickAddCol(null)} className="p-1 text-steel"><X size={14} /></button>
-                                <button onClick={() => submitQuickAdd(col.id)} className="px-2 py-1 bg-blue-600 text-white text-xs rounded">Add</button>
-                            </div>
-                        </div>
-                    )}
+
 
                     {col.items.map(item => (
                         <SortableJobCard
@@ -125,18 +100,12 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                         />
                     ))}
 
-                    {col.items.length === 0 && !quickAddCol && !isOver && (
+                    {col.items.length === 0 && !isOver && (
                         <div className="h-32 flex flex-col items-center justify-center text-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50">
                             {col.id === 'saved' ? (
                                 <div className="flex flex-col items-center gap-2">
-                                    <button
-                                        onClick={() => navigate('/generate')}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
-                                    >
-                                        <Plus size={14} />
-                                        <span>New Resume</span>
-                                    </button>
-                                    <p className="text-xs text-gray-400 mt-1">Or drop a job here</p>
+                                    <p className="text-sm font-medium text-gray-500">Drop a job here</p>
+                                    <p className="text-xs text-gray-400">Drag any job card into this column.</p>
                                 </div>
                             ) : (
                                 <>

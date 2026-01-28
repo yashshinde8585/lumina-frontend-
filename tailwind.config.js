@@ -28,6 +28,7 @@ export default {
         },
     },
     plugins: [
+        require('@tailwindcss/typography'),
         function ({ addUtilities, addComponents, addVariant, addBase, theme }) {
             // 1. CSS Variable for Accent Color
             addBase({

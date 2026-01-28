@@ -82,6 +82,10 @@ export interface JobCard {
     role: string;
     date: Date;
     salary?: string;
+    location?: string;
+    type?: string;
+    source?: string;
+    jobUrl?: string;
     linkedResumeId?: string | number;
     externalResume?: {
         name: string;
@@ -96,6 +100,23 @@ export interface JobCard {
         status: string;
         date: string;
         type?: 'status_change' | 'note_added' | 'manual';
+    }[];
+    recruiter?: {
+        name?: string;
+        email?: string;
+        linkedin?: string;
+        phone?: string;
+    };
+    tasks?: {
+        id: string;
+        text: string;
+        completed: boolean;
+    }[];
+    upcomingRounds?: {
+        id: string;
+        type: 'aptitude' | 'technical' | 'interview' | 'screening' | 'other';
+        scheduledDate: string; // ISO date string
+        notes?: string;
     }[];
 }
 

@@ -10,13 +10,13 @@ import {
 import { arrayMove } from '@dnd-kit/sortable';
 import confetti from 'canvas-confetti';
 import {
-    AlertCircle, Loader2, Edit2, CheckCircle, FileText
+    AlertCircle, Loader2, Edit2, CheckCircle, FileText, Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '../components/ui/Button';
 
-import AppHeader from '../components/layout/AppHeader';
+import AppHeader, { startTour } from '../components/layout/AppHeader';
 import JobBoard from '../components/dashboard/JobBoard';
 import AnalyticsSection from '../components/dashboard/AnalyticsSection';
 import JobDetailsDrawer from '../components/dashboard/JobDetailsDrawer';
@@ -25,7 +25,7 @@ import { SortableJobCard } from '../components/dashboard/board/SortableJobCard';
 
 import { authService } from '../services/authService';
 import { resumeService } from '../services/resumeService';
-import { TRACKING_COLUMNS, INITIAL_COLUMNS } from '../utils/constants';
+import { TRACKING_COLUMNS, INITIAL_COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { Resume, JobCard, BoardColumn } from '../types';
 
 const Dashboard = () => {
@@ -90,6 +90,11 @@ const Dashboard = () => {
     // Tailor Resume State
     const [tailorModalOpen, setTailorModalOpen] = useState(false);
     const [tailorJobData, setTailorJobData] = useState<{ resumeId: number, job: JobCard } | null>(null);
+
+    // Schedule Round State
+    const [scheduleRoundModalOpen, setScheduleRoundModalOpen] = useState(false);
+    const [scheduleRoundData, setScheduleRoundData] = useState<{ job: JobCard, columnId: string } | null>(null);
+    const [newRound, setNewRound] = useState({ type: 'interview' as const, scheduledDate: '', notes: '' });
 
     const sensors = useSensors(
         useSensor(MouseSensor, {
@@ -211,6 +216,23 @@ const Dashboard = () => {
         }
     }, []);
 
+    // Auto-start tour for first-time users
+    useEffect(() => {
+        // Only run on dashboard and after loading is complete
+        if (!loading && user) {
+            const hasSeenTour = localStorage.getItem('lumina_tour_completed');
+
+            if (!hasSeenTour) {
+                // Delay tour start to ensure all elements are rendered
+                const timer = setTimeout(() => {
+                    startTour();
+                    localStorage.setItem('lumina_tour_completed', 'true');
+                }, 1500); // Increased delay for better reliability
+
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [loading, user]);
 
 
 
@@ -270,6 +292,14 @@ const Dashboard = () => {
         const overColumnId = findColumn(overId);
 
         if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) return;
+
+        // Block reverse status changes
+        const activeIdx = COLUMN_ORDER.indexOf(activeColumnId);
+        const overIdx = COLUMN_ORDER.indexOf(overColumnId);
+
+        if (overIdx < activeIdx) {
+            return;
+        }
 
         setColumns((prev) => {
             const activeColIndex = prev.findIndex(col => col.id === activeColumnId);
@@ -403,6 +433,19 @@ const Dashboard = () => {
                 };
                 toast.success(getToastMessage(activeColumnId, companyName));
 
+                // Check if we should ask to schedule a round
+                const roundTypes = ['aptitude', 'technical', 'interview', 'screening'];
+                if (roundTypes.includes(activeColumnId)) {
+                    const movedJob = active.data.current.item;
+                    setScheduleRoundData({ job: movedJob, columnId: activeColumnId });
+                    setNewRound({
+                        type: activeColumnId as any,
+                        scheduledDate: '',
+                        notes: ''
+                    });
+                    setScheduleRoundModalOpen(true);
+                }
+
                 if (activeColumnId === 'offer') {
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#22c55e', '#ffffff', '#fbbf24'] });
                 }
@@ -453,6 +496,41 @@ const Dashboard = () => {
         setDropData(null);
     };
 
+    const handleScheduleRound = () => {
+        if (!scheduleRoundData || !newRound.scheduledDate) {
+            toast.error('Please select a date for the round');
+            return;
+        }
+
+        const round = {
+            id: Date.now().toString(),
+            type: newRound.type,
+            scheduledDate: newRound.scheduledDate,
+            notes: newRound.notes
+        };
+
+        // Update the job card with the new round
+        setColumns(prev => prev.map(col => ({
+            ...col,
+            items: col.items.map(item => {
+                if (item.id === scheduleRoundData.job.id) {
+                    const existingRounds = item.upcomingRounds || [];
+                    return {
+                        ...item,
+                        upcomingRounds: [...existingRounds, round]
+                    };
+                }
+                return item;
+            })
+        })));
+
+        toast.success('Round scheduled successfully!');
+        setScheduleRoundModalOpen(false);
+        setScheduleRoundData(null);
+        setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+    };
+
+
     const dropAnimation: DropAnimation = {
         sideEffects: defaultDropAnimationSideEffects({
             styles: { active: { opacity: '0.4' } },
@@ -477,13 +555,15 @@ const Dashboard = () => {
                     {/* Header Actions */}
                     <div className="mb-8 pt-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
-                            <p className="text-gray-500 text-sm mt-2 font-medium">Track your applications and analyze your performance.</p>
+                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
+                            <p className="text-gray-400 text-xs mt-1.5 font-medium">Track your applications and analyze your performance.</p>
                         </div>
                     </div>
 
                     {/* Top Section - Analytics */}
-                    <AnalyticsSection columns={columns} onFunnelClick={handleFunnelClick} />
+                    <div id="dashboard-analytics">
+                        <AnalyticsSection columns={columns} onFunnelClick={handleFunnelClick} />
+                    </div>
 
                     {/* Bottom Section - Job Tracker (Droppable Targets) */}
                     {loading ? (
@@ -492,14 +572,25 @@ const Dashboard = () => {
                             <p className="text-gray-500 font-medium">Loading your resumes...</p>
                         </div>
                     ) : (
-                        <JobBoard
-                            columns={columns}
-                            setColumns={setColumns}
-                            onJobClick={handleJobClick}
-                            highlightColumnId={highlightColumnId}
-                        >
-                            {/* <MyResumes /> Removed and moved to separate page */}
-                        </JobBoard>
+                        <div id="dashboard-job-board">
+                            <JobBoard
+                                columns={columns}
+                                setColumns={setColumns}
+                                onJobClick={handleJobClick}
+                                highlightColumnId={highlightColumnId}
+                                onScheduleRound={(job, columnId) => {
+                                    setScheduleRoundData({ job, columnId });
+                                    setNewRound({
+                                        type: columnId as any,
+                                        scheduledDate: '',
+                                        notes: ''
+                                    });
+                                    setScheduleRoundModalOpen(true);
+                                }}
+                            >
+                                {/* <MyResumes /> Removed and moved to separate page */}
+                            </JobBoard>
+                        </div>
                     )}
                 </main>
 
@@ -626,6 +717,85 @@ const Dashboard = () => {
                                         }}
                                     >
                                         Start Tailoring
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Schedule Round Modal */}
+                <AnimatePresence>
+                    {scheduleRoundModalOpen && scheduleRoundData && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                            onClick={() => setScheduleRoundModalOpen(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="text-center mb-6">
+                                    <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Calendar size={24} className="text-purple-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Schedule This Round?</h3>
+                                    <p className="text-gray-600 text-sm">
+                                        Would you like to schedule a date for this{' '}
+                                        <span className="font-bold text-purple-600 capitalize">{newRound.type}</span> round
+                                        {' '}at <span className="font-bold">{scheduleRoundData.job.company}</span>?
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4 mb-6">
+                                    {/* Scheduled Date */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-2">Scheduled Date</label>
+                                        <input
+                                            type="date"
+                                            value={newRound.scheduledDate}
+                                            onChange={(e) => setNewRound({ ...newRound, scheduledDate: e.target.value })}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    {/* Notes */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-2">Notes (Optional)</label>
+                                        <textarea
+                                            value={newRound.notes}
+                                            onChange={(e) => setNewRound({ ...newRound, notes: e.target.value })}
+                                            placeholder="Add any additional details..."
+                                            rows={2}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setScheduleRoundModalOpen(false);
+                                            setScheduleRoundData(null);
+                                            setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+                                        }}
+                                        className="flex-1"
+                                    >
+                                        Skip
+                                    </Button>
+                                    <Button
+                                        onClick={handleScheduleRound}
+                                        className="flex-1 bg-purple-600 hover:bg-purple-700"
+                                    >
+                                        Schedule
                                     </Button>
                                 </div>
                             </motion.div>
