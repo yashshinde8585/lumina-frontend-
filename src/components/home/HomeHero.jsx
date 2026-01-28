@@ -76,16 +76,7 @@ const HomeHero = () => {
 
                         {/* Door B: Track */}
                         <Link to="/dashboard" className="group relative block">
-                            {/* Click Hint - Only visible when logged in */}
-                            {isLoggedIn && (
-                                <div className="absolute -top-3 right-6 z-20 animate-bounce">
-                                    <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 border-2 border-white">
-                                        Click Here <ArrowRight size={10} className="rotate-90" />
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="h-full bg-white hover:bg-gray-50 text-gray-900 rounded-xl p-4 cursor-pointer transition-all border border-gray-200 hover:border-blue-300 flex items-center gap-4 relative ring-2 ring-blue-500/10 hover:ring-blue-500/50">
+                            <div className="h-full bg-white hover:bg-gray-50 text-gray-900 rounded-xl p-4 cursor-pointer transition-all border border-gray-200 hover:border-blue-300 flex items-center gap-4 relative">
                                 <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0 text-blue-600 group-hover:scale-110 transition-transform duration-300">
                                     <FileText size={22} />
                                 </div>

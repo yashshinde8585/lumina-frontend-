@@ -1,8 +1,9 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useBlocker } from 'react-router-dom';
 import {
-    ArrowLeft, FileText, CheckSquare, Send, Calculator, Code, Users, Briefcase, XCircle, Download, Trash2, X,
-    Clock, Search, MoreVertical, Plus, CheckCircle
+    ArrowLeft, FileText, CheckSquare, Send, Calculator, Code, Users, Briefcase, XCircle, Download,
+    Trash2, ExternalLink, Mail, Linkedin, Phone, Calendar, Clock, Search, ChevronDown, CheckCircle,
+    Plus, MoreVertical, X
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import AppHeader from '../components/layout/AppHeader';
@@ -10,22 +11,8 @@ import { JobCard } from '../types';
 import { toast } from 'sonner';
 import { resumeService } from '../services/resumeService';
 import { authService } from '../services/authService';
-import { TRACKING_COLUMNS, INITIAL_COLUMNS } from '../utils/constants';
-
-const getStatusButtonClass = (color: string, hasChanges: boolean) => {
-    const base = "px-4 py-1.5 rounded-lg text-xs font-medium transition-colors border";
-    const statusColorMap: { [key: string]: string } = {
-        gray: hasChanges ? 'bg-gray-600 text-white hover:bg-gray-700 border-transparent shadow-sm cursor-pointer' : 'bg-gray-50 text-gray-700 border-gray-200 cursor-default',
-        blue: hasChanges ? 'bg-blue-600 text-white hover:bg-blue-700 border-transparent shadow-sm cursor-pointer' : 'bg-blue-50 text-blue-700 border-blue-200 cursor-default',
-        orange: hasChanges ? 'bg-orange-600 text-white hover:bg-orange-700 border-transparent shadow-sm cursor-pointer' : 'bg-orange-50 text-orange-700 border-orange-200 cursor-default',
-        cyan: hasChanges ? 'bg-cyan-600 text-white hover:bg-cyan-700 border-transparent shadow-sm cursor-pointer' : 'bg-cyan-50 text-cyan-700 border-cyan-200 cursor-default',
-        indigo: hasChanges ? 'bg-indigo-600 text-white hover:bg-indigo-700 border-transparent shadow-sm cursor-pointer' : 'bg-indigo-50 text-indigo-700 border-indigo-200 cursor-default',
-        purple: hasChanges ? 'bg-purple-600 text-white hover:bg-purple-700 border-transparent shadow-sm cursor-pointer' : 'bg-purple-50 text-purple-700 border-purple-200 cursor-default',
-        green: hasChanges ? 'bg-green-600 text-white hover:bg-green-700 border-transparent shadow-sm cursor-pointer' : 'bg-green-50 text-green-700 border-green-200 cursor-default',
-        red: hasChanges ? 'bg-red-600 text-white hover:bg-red-700 border-transparent shadow-sm cursor-pointer' : 'bg-red-50 text-red-700 border-red-200 cursor-default',
-    };
-    return `${base} ${statusColorMap[color] || statusColorMap['blue']}`;
-};
+import { TRACKING_COLUMNS, INITIAL_COLUMNS, COLUMN_ORDER } from '../utils/constants';
+import RichTextEditor from '../components/ui/RichTextEditor';
 
 const JobDetailsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -49,6 +36,24 @@ const JobDetailsPage: React.FC = () => {
     const [pendingStatusId, setPendingStatusId] = React.useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
+    // New Fields States
+    const [salary, _setSalary] = React.useState(job?.salary || '');
+    const [locationMeta, _setLocationMeta] = React.useState(job?.location || '');
+    const [jobType, _setJobType] = React.useState(job?.type || '');
+    const [source, setSource] = React.useState(job?.source || '');
+    const [jobUrl, setJobUrl] = React.useState(job?.jobUrl || '');
+    const [description, setDescription] = React.useState(job?.description || '');
+
+    const [recruiter, setRecruiter] = React.useState(job?.recruiter || { name: '', email: '', linkedin: '', phone: '' });
+    const [tasks, setTasks] = React.useState(job?.tasks || []);
+    const [newTaskText, setNewTaskText] = React.useState('');
+    const [upcomingRounds, setUpcomingRounds] = React.useState(job?.upcomingRounds || []);
+    const [showAddRoundModal, setShowAddRoundModal] = React.useState(false);
+    const [newRound, setNewRound] = React.useState({ type: 'interview' as const, scheduledDate: '', notes: '' });
+    const [askScheduleRound, setAskScheduleRound] = React.useState(false);
+
+    const [activeTab, setActiveTab] = React.useState<'notes' | 'jd' | 'reflection'>('notes');
+
     const [user, setUser] = React.useState<{ name: string, email: string } | null>(null);
 
     React.useEffect(() => {
@@ -61,6 +66,8 @@ const JobDetailsPage: React.FC = () => {
             });
         }
     }, []);
+
+
 
     React.useEffect(() => {
         document.title = 'Job Application Details';
@@ -80,6 +87,7 @@ const JobDetailsPage: React.FC = () => {
                 if (found) {
                     setStatus({ title: col.title, color: col.color, id: col.id });
                     setJob(found);
+                    if (col.id === 'rejected') setActiveTab('reflection');
                     break;
                 }
             }
@@ -91,8 +99,47 @@ const JobDetailsPage: React.FC = () => {
     const initialReflection = React.useMemo(() => job?.reflection || '', [job?.reflection]);
     const initialRejectionRound = React.useMemo(() => job?.rejectionRound || '', [job?.rejectionRound]);
     const initialRejectionReason = React.useMemo(() => job?.rejectionReason || '', [job?.rejectionReason]);
+    const initialSalary = React.useMemo(() => job?.salary || '', [job?.salary]);
+    const initialLocation = React.useMemo(() => job?.location || '', [job?.location]);
+    const initialType = React.useMemo(() => job?.type || '', [job?.type]);
+    const initialSource = React.useMemo(() => job?.source || '', [job?.source]);
+    const initialJobUrl = React.useMemo(() => job?.jobUrl || '', [job?.jobUrl]);
+    const initialDescription = React.useMemo(() => job?.description || '', [job?.description]);
+    const initialRecruiter = React.useMemo(() => job?.recruiter || { name: '', email: '', linkedin: '', phone: '' }, [job?.recruiter]);
+    const initialTasks = React.useMemo(() => job?.tasks || [], [job?.tasks]);
+    const initialUpcomingRounds = React.useMemo(() => job?.upcomingRounds || [], [job?.upcomingRounds]);
 
-    const hasChanges = notes !== initialNotes || reflection !== initialReflection || rejectionRound !== initialRejectionRound || rejectionReason !== initialRejectionReason;
+    const hasChanges = notes !== initialNotes ||
+        reflection !== initialReflection ||
+        rejectionRound !== initialRejectionRound ||
+        rejectionReason !== initialRejectionReason ||
+        salary !== initialSalary ||
+        locationMeta !== initialLocation ||
+        jobType !== initialType ||
+        source !== initialSource ||
+        jobUrl !== initialJobUrl ||
+        description !== initialDescription ||
+        JSON.stringify(recruiter) !== JSON.stringify(initialRecruiter) ||
+        JSON.stringify(tasks) !== JSON.stringify(initialTasks) ||
+        JSON.stringify(upcomingRounds) !== JSON.stringify(initialUpcomingRounds);
+
+    // Warn on unsaved changes
+    React.useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasChanges]);
+
+    // Block navigation if there are unsaved changes
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            hasChanges && currentLocation.pathname !== nextLocation.pathname
+    );
 
     // MyResumes state
     const [allResumes, setAllResumes] = React.useState<any[]>([]);
@@ -153,6 +200,15 @@ const JobDetailsPage: React.FC = () => {
                     foundJob.reflection = reflection;
                     foundJob.rejectionRound = rejectionRound;
                     foundJob.rejectionReason = rejectionReason;
+                    foundJob.salary = salary;
+                    foundJob.location = locationMeta;
+                    foundJob.type = jobType;
+                    foundJob.source = source;
+                    foundJob.jobUrl = jobUrl;
+                    foundJob.description = description;
+                    foundJob.recruiter = recruiter;
+                    foundJob.tasks = tasks;
+                    foundJob.upcomingRounds = upcomingRounds;
                     break;
                 }
             }
@@ -175,11 +231,135 @@ const JobDetailsPage: React.FC = () => {
                 notes,
                 reflection,
                 rejectionRound,
-                rejectionReason
+                rejectionReason,
+                salary,
+                location: locationMeta,
+                type: jobType,
+                source,
+                jobUrl,
+                description,
+                recruiter,
+                tasks,
+                upcomingRounds
             });
         }
+        toast.success("Changes saved successfully!");
     };
 
+    const handleAddTask = () => {
+        if (!newTaskText.trim()) return;
+        const newTask = {
+            id: Date.now().toString(),
+            text: newTaskText.trim(),
+            completed: false
+        };
+        setTasks([...tasks, newTask]);
+        setNewTaskText('');
+    };
+
+    const toggleTask = (id: string) => {
+        setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    };
+
+    const deleteTask = (id: string) => {
+        setTasks(tasks.filter(t => t.id !== id));
+    };
+
+    const handleAddRound = () => {
+        if (!newRound.scheduledDate) {
+            toast.error('Please select a date for the round');
+            return;
+        }
+        const round = {
+            id: Date.now().toString(),
+            type: newRound.type,
+            scheduledDate: newRound.scheduledDate,
+            notes: newRound.notes
+        };
+        setUpcomingRounds([...upcomingRounds, round]);
+        setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+        setShowAddRoundModal(false);
+        toast.success('Round scheduled successfully!');
+    };
+
+    const deleteRound = (id: string) => {
+        setUpcomingRounds(upcomingRounds.filter(r => r.id !== id));
+        toast.success('Round removed');
+    };
+
+    const confirmStatusChange = async () => {
+        if (!pendingStatusId) return;
+
+        const userEmail = authService.getUserEmail() || 'guest';
+        const storageKey = `jobColumns_${userEmail}`;
+        const savedColumns = localStorage.getItem(storageKey);
+
+        if (savedColumns) {
+            const columns = JSON.parse(savedColumns);
+            let foundJob: any = null;
+            let targetCol: any = null;
+
+            // Find the job and move it
+            for (const col of columns) {
+                const jobIndex = col.items.findIndex((item: any) => String(item.id) === String(job.id));
+                if (jobIndex !== -1) {
+                    foundJob = col.items[jobIndex];
+                    col.items.splice(jobIndex, 1);
+                    break;
+                }
+            }
+
+            if (foundJob) {
+                targetCol = columns.find((c: any) => c.id === pendingStatusId);
+                if (targetCol) {
+                    // Add history entry
+                    if (!foundJob.history) foundJob.history = [];
+                    foundJob.history.push({
+                        status: pendingStatusId,
+                        date: new Date().toISOString(),
+                        type: 'status_change'
+                    });
+                    targetCol.items.unshift(foundJob);
+
+                    localStorage.setItem(storageKey, JSON.stringify(columns));
+
+                    // Sync to backend
+                    if (authService.getToken()) {
+                        try {
+                            await authService.updateBoard(columns);
+                        } catch (err) {
+                            console.error('Failed to sync board to backend:', err);
+                        }
+                    }
+
+                    // Update local state
+                    const newStatus = INITIAL_COLUMNS.find(c => c.id === pendingStatusId);
+                    if (newStatus) {
+                        setStatus(newStatus);
+                        if (pendingStatusId === 'rejected') setActiveTab('reflection');
+                    }
+
+                    toast.success(`Status updated to ${targetCol.title}`);
+
+                    // Check if we should ask to schedule a round
+                    const roundTypes = ['aptitude', 'technical', 'interview', 'screening'];
+                    if (roundTypes.includes(pendingStatusId)) {
+                        setShowStatusConfirm(false);
+                        setAskScheduleRound(true);
+                        // Pre-fill the round type
+                        setNewRound({
+                            type: pendingStatusId as any,
+                            scheduledDate: '',
+                            notes: ''
+                        });
+                    } else {
+                        setShowStatusConfirm(false);
+                        setPendingStatusId(null);
+                    }
+                }
+            }
+        }
+    };
 
 
     const handleDelete = () => {
@@ -290,11 +470,12 @@ const JobDetailsPage: React.FC = () => {
 
         // Update local state immediately
         setJob(updatedJob);
+        if (newStatusId === 'rejected') setActiveTab('reflection');
 
         // Update URL state so reload preserves new data
         navigate(location.pathname, { state: { job: updatedJob }, replace: true });
 
-        toast.success(`Moved to **${newColTitle}** stage.`);
+        toast.success(`Moved to ${newColTitle} stage.`);
     };
 
     const confirmStatusUpdate = () => {
@@ -484,6 +665,245 @@ const JobDetailsPage: React.FC = () => {
             )
             }
 
+
+
+            {/* Unsaved Changes Confirmation Modal */}
+            {blocker.state === 'blocked' && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 relative animate-in zoom-in-95 duration-200">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileText size={24} className="text-yellow-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Unsaved Changes</h3>
+                            <p className="text-gray-600 text-sm">
+                                You have unsaved changes. Do you want to save them before leaving?
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <Button
+                                onClick={async () => {
+                                    await handleSave();
+                                    blocker.proceed?.();
+                                }}
+                                className="w-full"
+                            >
+                                Save & Continue
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => blocker.proceed?.()}
+                                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            >
+                                Discard Changes
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => blocker.reset?.()}
+                                className="w-full"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Round Modal */}
+            {showAddRoundModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => {
+                                setShowAddRoundModal(false);
+                                setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+                            }}
+                            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Calendar size={24} className="text-purple-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Schedule Round</h3>
+                            <p className="text-gray-600 text-sm">
+                                Add an upcoming interview or test to your calendar
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Round Type */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Round Type</label>
+                                <select
+                                    value={newRound.type}
+                                    onChange={(e) => setNewRound({ ...newRound, type: e.target.value as any })}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="screening">Screening</option>
+                                    <option value="aptitude">Aptitude Test</option>
+                                    <option value="technical">Technical Round</option>
+                                    <option value="interview">Interview</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            {/* Scheduled Date */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Scheduled Date</label>
+                                <input
+                                    type="date"
+                                    value={newRound.scheduledDate}
+                                    onChange={(e) => setNewRound({ ...newRound, scheduledDate: e.target.value })}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Notes (Optional)</label>
+                                <textarea
+                                    value={newRound.notes}
+                                    onChange={(e) => setNewRound({ ...newRound, notes: e.target.value })}
+                                    placeholder="Add any additional details..."
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowAddRoundModal(false);
+                                    setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+                                }}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleAddRound}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            >
+                                Schedule Round
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Status Confirmation Modal */}
+            {showStatusConfirm && pendingStatusId && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-in zoom-in-95 duration-200">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle size={24} className="text-blue-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Status Change</h3>
+                            <p className="text-gray-600 text-sm">
+                                Are you sure you want to move this application to{' '}
+                                <span className="font-bold text-blue-600">
+                                    {INITIAL_COLUMNS.find(c => c.id === pendingStatusId)?.title}
+                                </span>?
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowStatusConfirm(false);
+                                    setPendingStatusId(null);
+                                }}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={confirmStatusChange}
+                                className="flex-1"
+                            >
+                                Confirm
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Ask Schedule Round Modal */}
+            {askScheduleRound && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative animate-in zoom-in-95 duration-200">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Calendar size={24} className="text-purple-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Schedule This Round?</h3>
+                            <p className="text-gray-600 text-sm">
+                                Would you like to schedule a date for this{' '}
+                                <span className="font-bold text-purple-600 capitalize">{newRound.type}</span> round?
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            {/* Scheduled Date */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Scheduled Date</label>
+                                <input
+                                    type="date"
+                                    value={newRound.scheduledDate}
+                                    onChange={(e) => setNewRound({ ...newRound, scheduledDate: e.target.value })}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Notes (Optional)</label>
+                                <textarea
+                                    value={newRound.notes}
+                                    onChange={(e) => setNewRound({ ...newRound, notes: e.target.value })}
+                                    placeholder="Add any additional details..."
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setAskScheduleRound(false);
+                                    setPendingStatusId(null);
+                                    setNewRound({ type: 'interview', scheduledDate: '', notes: '' });
+                                }}
+                                className="flex-1"
+                            >
+                                Skip
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    handleAddRound();
+                                    setAskScheduleRound(false);
+                                    setPendingStatusId(null);
+                                }}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            >
+                                Schedule
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Resume Modal */}
             {
                 showResumeModal && (
@@ -573,9 +993,9 @@ const JobDetailsPage: React.FC = () => {
             <AppHeader user={user} />
 
             {/* Main Content */}
-            <main className="max-w-5xl mx-auto px-6 py-8">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
                 {/* Job Header Card - Premium Design */}
-                <div className={`rounded-xl shadow-sm border mb-6 bg-${status.color}-50 border-${status.color}-200 relative`}>
+                <div className="rounded-xl shadow-sm border mb-6 bg-white border-gray-200 relative">
                     <button
                         onClick={handleDelete}
                         className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors z-10"
@@ -583,11 +1003,11 @@ const JobDetailsPage: React.FC = () => {
                     >
                         <Trash2 size={18} />
                     </button>
-                    <div className="p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-6">
+                    <div className="p-5 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
                         {/* Logo and Job Identity Group (Horizontal on Mobile) */}
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                             {/* Company Logo - Large & Soft */}
-                            <div className={`w-20 h-20 rounded-[1.25rem] bg-${status.color || 'blue'}-50/50 flex items-center justify-center border border-${status.color || 'blue'}-100/50 overflow-hidden shrink-0 shadow-[0_4px_20px_-12px_rgba(0,0,0,0.1)] p-4`}>
+                            <div className={`w-12 h-12 sm:w-20 sm:h-20 rounded-xl sm:rounded-[1.25rem] bg-${status.color || 'blue'}-50/50 flex items-center justify-center border border-${status.color || 'blue'}-100/50 overflow-hidden shrink-0 shadow-[0_4px_20px_-12px_rgba(0,0,0,0.1)] p-2.5 sm:p-4`}>
                                 {job.company && job.company.toLowerCase().replace(/\s/g, '') !== 'companyname' ? (
                                     <img
                                         src={`https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s/g, '')}.com`}
@@ -597,12 +1017,12 @@ const JobDetailsPage: React.FC = () => {
                                             // Fallback to initial
                                             const parent = (e.target as HTMLImageElement).parentElement;
                                             if (parent) {
-                                                parent.innerHTML = `<span class="text-2xl font-bold text-${status.color || 'blue'}-300">${job.company.charAt(0)}</span>`;
+                                                parent.innerHTML = `<span class="text-xl sm:text-2xl font-bold text-${status.color || 'blue'}-300">${job.company.charAt(0)}</span>`;
                                             }
                                         }}
                                     />
                                 ) : (
-                                    <span className={`text-2xl font-bold text-${status.color || 'blue'}-300`}>
+                                    <span className={`text-xl sm:text-2xl font-bold text-${status.color || 'blue'}-300`}>
                                         {job.company.charAt(0)}
                                     </span>
                                 )}
@@ -615,20 +1035,18 @@ const JobDetailsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Resume & Date Section (Responsive Row/Col) */}
-                        {/* Resume & Date Section (Responsive Row/Col) */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 shrink-0 w-full sm:w-auto">
+                        {/* Resume & Date Section (Responsive Row) */}
+                        <div className="flex items-center gap-3 sm:gap-8 shrink-0 w-full sm:w-auto">
                             {/* Linked Resume Card */}
-                            <div className="w-full sm:w-auto">
+                            <div className="flex-1 sm:flex-initial">
                                 {(linkedResumeId || externalResume) && (
-                                    <div className="flex items-center gap-3 px-4 py-2 bg-white/50 backdrop-blur-md rounded-xl border border-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:bg-white/80 w-full sm:w-auto group cursor-pointer" onClick={handleViewResume}>
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${externalResume ? 'bg-purple-100/50 text-purple-600' : 'bg-blue-100/50 text-blue-600'} group-hover:scale-110 transition-transform`}>
+                                    <div className="flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-md rounded-xl border border-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all hover:bg-white/80 w-full sm:w-auto group cursor-pointer" onClick={handleViewResume}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${externalResume ? 'bg-purple-100/50 text-purple-600' : 'bg-blue-100/50 text-blue-600'} group-hover:scale-110 transition-transform flex-shrink-0`}>
                                             <FileText size={16} />
                                         </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Resume</p>
-                                            <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600 truncate max-w-[150px] block">
-                                                {externalResume ? 'External PDF' : (allResumes.find(r => r.id === linkedResumeId)?.title || 'My Resume')}
+                                        <div className="min-w-0">
+                                            <span className="text-xs sm:text-sm font-bold text-gray-700 group-hover:text-blue-600 truncate">
+                                                {externalResume ? 'Attached PDF' : 'Resume'}
                                             </span>
                                         </div>
                                     </div>
@@ -636,10 +1054,10 @@ const JobDetailsPage: React.FC = () => {
                             </div>
 
                             {/* Applied Date */}
-                            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto sm:border-l sm:border-gray-200 sm:pl-6">
-                                <div className="flex flex-col items-start sm:items-end px-4 py-2 bg-white/50 backdrop-blur-md rounded-xl border border-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                            <div className="flex-1 sm:flex-initial sm:border-l sm:border-gray-200 sm:pl-8">
+                                <div className="flex flex-col items-center sm:items-end px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-md rounded-xl border border-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.02)] w-full">
                                     <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">Applied on</p>
-                                    <span className="text-sm font-bold text-gray-900 font-mono">
+                                    <span className="text-xs sm:text-sm font-bold text-gray-900 font-mono">
                                         {new Date(job.date).toLocaleDateString('en-GB')}
                                     </span>
                                 </div>
@@ -664,7 +1082,7 @@ const JobDetailsPage: React.FC = () => {
                                     : linearStages.indexOf(status.id) >= linearStages.indexOf(sid);
                             };
 
-                            return linearStages.map((cid, index) => {
+                            return linearStages.map((cid) => {
                                 const col = INITIAL_COLUMNS.find(c => c.id === cid);
                                 if (!col) return null;
                                 const isActive = cid === status.id;
@@ -677,14 +1095,22 @@ const JobDetailsPage: React.FC = () => {
                                         <button
                                             onClick={() => {
                                                 if (!isActive) {
+                                                    const currentIdx = COLUMN_ORDER.indexOf(status.id);
+                                                    const targetIdx = COLUMN_ORDER.indexOf(cid);
+
+                                                    if (targetIdx < currentIdx) {
+                                                        toast.error("You can only move the application forward.");
+                                                        return;
+                                                    }
+
                                                     setPendingStatusId(cid);
                                                     setShowStatusConfirm(true);
                                                 }
                                             }}
-                                            className={`flex flex-col items-center gap-3 group min-w-[80px] cursor-pointer transition-all duration-300 relative flex-shrink-0`}
+                                            className={`flex flex-col items-center gap-2 sm:gap-3 group min-w-[70px] sm:min-w-[80px] ${COLUMN_ORDER.indexOf(cid) < COLUMN_ORDER.indexOf(status.id) ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'} transition-all duration-300 relative flex-shrink-0`}
                                         >
                                             <div className={`
-                                            w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm z-10 border-[3px]
+                                            w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm z-10 border-[3px]
                                             ${isActive
                                                     ? `bg-white border-${col.color}-500 text-${col.color}-600 scale-110 shadow-[0_0_0_4px_rgba(59,130,246,0.1)] animate-pulse` // Glow effect
                                                     : isVisited
@@ -693,16 +1119,17 @@ const JobDetailsPage: React.FC = () => {
                                                 }
                                         `}>
                                                 {(() => {
+                                                    const currentIconSize = window.innerWidth < 640 ? (isActive ? 18 : 16) : (isActive ? 20 : 18);
                                                     switch (cid) {
-                                                        case 'saved': return <Clock size={isActive ? 20 : 18} />;
-                                                        case 'applied': return <Send size={isActive ? 20 : 18} />;
-                                                        case 'screening': return <Search size={isActive ? 20 : 18} />;
-                                                        case 'aptitude': return <Calculator size={isActive ? 20 : 18} />;
-                                                        case 'technical': return <Code size={isActive ? 20 : 18} />;
-                                                        case 'interview': return <Users size={isActive ? 20 : 18} />;
-                                                        case 'offer': return <Briefcase size={isActive ? 20 : 18} />;
-                                                        case 'rejected': return <XCircle size={isActive ? 20 : 18} />;
-                                                        default: return <FileText size={isActive ? 20 : 18} />;
+                                                        case 'saved': return <Clock size={currentIconSize} />;
+                                                        case 'applied': return <Send size={currentIconSize} />;
+                                                        case 'screening': return <Search size={currentIconSize} />;
+                                                        case 'aptitude': return <Calculator size={currentIconSize} />;
+                                                        case 'technical': return <Code size={currentIconSize} />;
+                                                        case 'interview': return <Users size={currentIconSize} />;
+                                                        case 'offer': return <Briefcase size={currentIconSize} />;
+                                                        case 'rejected': return <XCircle size={currentIconSize} />;
+                                                        default: return <FileText size={currentIconSize} />;
                                                     }
                                                 })()}
                                             </div>
@@ -729,107 +1156,361 @@ const JobDetailsPage: React.FC = () => {
                 {/* Main Content Grid - The Two-Column Balance */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                    {/* Left Column: Notes & Input (70%) */}
+                    {/* Left Column: Notes & JD & Reflection (70%) */}
                     <div className="lg:col-span-8 space-y-6">
-                        {/* Personal Notes - The Workspace */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-0 overflow-hidden relative group">
-                            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
-                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                                    <CheckSquare size={16} className="text-gray-500" /> Personal Notes
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                    {!hasChanges && <span className="text-[10px] font-medium text-gray-400 flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-green-400"></div> All changes saved</span>}
+                        {/* Tab System */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group">
+                            <div className="flex items-center justify-between px-4 pt-4 border-b border-gray-100 bg-gray-50/50">
+                                <div className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide">
+                                    <button
+                                        onClick={() => setActiveTab('notes')}
+                                        className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap ${activeTab === 'notes' ? 'text-blue-600' : 'text-gray-400'}`}
+                                    >
+                                        <CheckSquare size={14} className="sm:w-4 sm:h-4" /> Personal Notes
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('jd')}
+                                        className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap ${activeTab === 'jd' ? 'text-blue-600' : 'text-gray-400'}`}
+                                    >
+                                        <FileText size={14} className="sm:w-4 sm:h-4" /> Job Description
+                                    </button>
+                                    {status.id === 'rejected' && (
+                                        <button
+                                            onClick={() => setActiveTab('reflection')}
+                                            className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap ${activeTab === 'reflection' ? 'text-red-600' : 'text-gray-400'}`}
+                                        >
+                                            <MoreVertical size={14} className="sm:w-4 sm:h-4" /> Reflection
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 pb-3 shrink-0 ml-2">
+                                    {!hasChanges && <span className="text-[9px] sm:text-[10px] font-medium text-gray-400 flex items-center gap-1 sm:gap-1.5 whitespace-nowrap"><div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-green-400"></div> <span className="hidden xs:inline">All changes saved</span><span className="xs:hidden">Saved</span></span>}
                                     {hasChanges && (
                                         <button
                                             onClick={handleSave}
                                             className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-full transition-colors"
                                         >
-                                            Save
+                                            Save All
                                         </button>
                                     )}
                                 </div>
                             </div>
+
                             <div className="relative">
-                                <textarea
-                                    className="w-full h-[500px] p-6 text-sm text-gray-700 placeholder:text-gray-300 focus:outline-none resize-none bg-white font-sans leading-relaxed selection:bg-blue-100 selection:text-blue-900"
-                                    placeholder="Start typing your notes here..."
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    spellCheck={false}
-                                />
+                                {activeTab === 'notes' && (
+                                    <RichTextEditor
+                                        value={notes}
+                                        onChange={(val) => setNotes(val)}
+                                        placeholder="Start typing your notes here..."
+                                        minHeight="400px"
+                                    />
+                                )}
+
+                                {activeTab === 'jd' && (
+                                    <RichTextEditor
+                                        value={description}
+                                        onChange={(val) => setDescription(val)}
+                                        placeholder="Paste job description here..."
+                                        minHeight="400px"
+                                    />
+                                )}
+
+                                {activeTab === 'reflection' && (
+                                    <div className="p-6 bg-red-50/30 min-h-[400px]">
+                                        <h3 className="text-lg font-bold text-red-800 mb-6 flex items-center gap-2 font-sans">
+                                            <span className="p-1.5 bg-red-100 rounded-lg"><MoreVertical size={16} className="text-red-600" /></span>
+                                            Reflection & Improvements
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-red-700 mb-2 uppercase tracking-wider">REJECTED ROUND</label>
+                                                <select
+                                                    value={rejectionRound}
+                                                    onChange={(e) => setRejectionRound(e.target.value)}
+                                                    className="w-full text-sm border border-red-200 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 text-gray-700 shadow-sm"
+                                                >
+                                                    <option value="">Select Round...</option>
+                                                    <option value="Resume Review">Resume Review</option>
+                                                    <option value="Aptitude Test">Aptitude Test</option>
+                                                    <option value="Technical Round">Technical Round</option>
+                                                    <option value="Interview Stage">Interview Stage</option>
+                                                    <option value="Job Offers">Job Offers</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-red-700 mb-2 uppercase tracking-wider">REASON</label>
+                                                <select
+                                                    value={rejectionReason}
+                                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                                    className="w-full text-sm border border-red-200 rounded-lg px-4 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 text-gray-700 shadow-sm"
+                                                >
+                                                    <option value="">Select Reason...</option>
+                                                    <option value="Resume Not Shortlisted">Resume Not Shortlisted</option>
+                                                    <option value="Skill Mismatch">Skill Mismatch</option>
+                                                    <option value="Technical Depth">Technical Depth</option>
+                                                    <option value="Problem Solving">Problem Solving</option>
+                                                    <option value="Soft Skills">Soft Skills</option>
+                                                    <option value="Cultural Fit">Cultural Fit</option>
+                                                    <option value="Assessment Score">Assessment Score</option>
+                                                    <option value="Salary Mismatch">Salary Mismatch</option>
+                                                    <option value="Better Qualified Candidate">Better Qualified Candidate</option>
+                                                    <option value="Role Closed/Freeze">Role Closed/Freeze</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs font-bold text-red-700 mb-2 uppercase tracking-wider">Detailed Reflection Notes:</p>
+                                        <RichTextEditor
+                                            value={reflection}
+                                            onChange={(val) => setReflection(val)}
+                                            placeholder="What can I improve for next time?"
+                                            minHeight="320px"
+                                        />
+                                    </div>
+                                )}
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Reflection Section - Conditional */}
-                        {status.title === 'Rejected' && (
-                            <div className="bg-red-50 rounded-xl shadow-sm border border-red-100 p-6">
-                                <h3 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2 font-sans">
-                                    <span className="p-1.5 bg-red-100 rounded-lg"><MoreVertical size={16} className="text-red-600" /></span>
-                                    Reflection & Improvements
+                    {/* Right Column: Key Info & History */}
+                    <div className="lg:col-span-4 space-y-6">
+                        {/* To-Do List */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                    <CheckCircle size={16} className="text-gray-400" /> To-Do List
                                 </h3>
+                                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                                    {tasks.filter(t => t.completed).length}/{tasks.length}
+                                </span>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-red-700 mb-1">REJECTED ROUND</label>
-                                        <select
-                                            value={rejectionRound}
-                                            onChange={(e) => setRejectionRound(e.target.value)}
-                                            className="w-full text-sm border border-red-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 text-gray-700"
+                            <div className="space-y-2 mb-4">
+                                {tasks.map((task) => (
+                                    <div key={task.id} className="flex items-center gap-3 group">
+                                        <button
+                                            onClick={() => toggleTask(task.id)}
+                                            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-200 text-transparent hover:border-blue-300'}`}
                                         >
-                                            <option value="">Select Round...</option>
-                                            <option value="Resume Screening">Resume Screening</option>
-                                            <option value="Online Assessment">Online Assessment</option>
-                                            <option value="Technical Interview">Technical Interview</option>
-                                            <option value="System Design">System Design</option>
-                                            <option value="Managerial/Behavioral">Managerial</option>
-                                            <option value="HR Round">HR Round</option>
-                                            <option value="Offer Negotiation">Offer Negotiation</option>
-                                        </select>
+                                            <CheckCircle size={12} strokeWidth={3} />
+                                        </button>
+                                        <span className={`flex-1 text-sm ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700 font-medium'}`}>
+                                            {task.text}
+                                        </span>
+                                        <button
+                                            onClick={() => deleteTask(task.id)}
+                                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
                                     </div>
+                                ))}
+                            </div>
+
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={newTaskText}
+                                    onChange={(e) => setNewTaskText(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+                                    placeholder="Add a reminder..."
+                                    className="w-full text-xs bg-gray-50 border-transparent focus:bg-white focus:border-blue-100 rounded-lg pl-3 pr-10 py-2.5 outline-none transition-all"
+                                />
+                                <button
+                                    onClick={handleAddTask}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 p-1"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Job Source Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <ExternalLink size={16} className="text-gray-400" /> Job Source
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-red-700 mb-1">REASON</label>
-                                        <select
-                                            value={rejectionReason}
-                                            onChange={(e) => setRejectionReason(e.target.value)}
-                                            className="w-full text-sm border border-red-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 text-gray-700"
-                                        >
-                                            <option value="">Select Reason...</option>
-                                            <option value="Technical Skills">Technical Skills</option>
-                                            <option value="Experience">Experience</option>
-                                            <option value="Culture Fit">Culture Fit</option>
-                                            <option value="Salary">Salary</option>
-                                            <option value="Position Closed">Position Closed</option>
-                                            <option value="No Feedback">No Feedback</option>
-                                        </select>
+                                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Source</label>
+                                        <div className="relative">
+                                            <select
+                                                value={source}
+                                                onChange={(e) => setSource(e.target.value)}
+                                                className="w-full text-sm font-medium text-gray-700 bg-gray-50 border-transparent focus:bg-white focus:border-blue-200 rounded-lg pl-3 pr-8 py-2 transition-all outline-none appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Select...</option>
+                                                <option value="LinkedIn">LinkedIn</option>
+                                                <option value="Naukri">Naukri</option>
+                                                <option value="Indeed">Indeed</option>
+                                                <option value="Glassdoor">Glassdoor</option>
+                                                <option value="Wellfound">Wellfound</option>
+                                                <option value="Instahire">Instahire</option>
+                                                <option value="Company Website">Company Website</option>
+                                                <option value="Referral">Referral</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col justify-end">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={jobUrl}
+                                                onChange={(e) => setJobUrl(e.target.value)}
+                                                placeholder="Paste URL..."
+                                                className="w-full text-sm font-medium text-gray-700 bg-gray-50 border-transparent focus:bg-white focus:border-blue-200 rounded-lg px-3 py-2 transition-all outline-none"
+                                            />
+                                            {jobUrl && (
+                                                <a
+                                                    href={jobUrl.startsWith('http') ? jobUrl : `https://${jobUrl}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-shrink-0 w-10 flex items-center justify-center text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+                                                    title="Open Link"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <p className="text-sm text-red-600 mb-2 font-medium">Reflection Notes:</p>
-                                <textarea
-                                    className="w-full h-32 p-4 border border-red-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none font-sans bg-white"
-                                    placeholder="What can I improve for next time?"
-                                    value={reflection}
-                                    onChange={(e) => setReflection(e.target.value)}
+                        {/* Recruiter Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <Users size={16} className="text-gray-400" /> Recruiter Info
+                            </h3>
+                            <div className="space-y-3">
+                                <input
+                                    type="text"
+                                    value={recruiter?.name || ''}
+                                    onChange={(e) => setRecruiter({ ...recruiter, name: e.target.value })}
+                                    placeholder="Name"
+                                    className="w-full text-sm font-bold text-gray-900 placeholder:text-gray-300 bg-transparent border-none focus:ring-0 p-0 outline-none"
                                 />
-                                <div className="flex justify-end mt-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <Mail size={14} className="shrink-0" />
+                                        <input
+                                            type="email"
+                                            value={recruiter?.email || ''}
+                                            onChange={(e) => setRecruiter({ ...recruiter, email: e.target.value })}
+                                            placeholder="Email address"
+                                            className="w-full text-xs bg-transparent border-none focus:ring-0 p-0 outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <Linkedin size={14} className="shrink-0" />
+                                        <input
+                                            type="text"
+                                            value={recruiter?.linkedin || ''}
+                                            onChange={(e) => setRecruiter({ ...recruiter, linkedin: e.target.value })}
+                                            placeholder="LinkedIn profile URL"
+                                            className="w-full text-xs bg-transparent border-none focus:ring-0 p-0 outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <Phone size={14} className="shrink-0" />
+                                        <input
+                                            type="text"
+                                            value={recruiter?.phone || ''}
+                                            onChange={(e) => setRecruiter({ ...recruiter, phone: e.target.value })}
+                                            placeholder="Phone number"
+                                            className="w-full text-xs bg-transparent border-none focus:ring-0 p-0 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Upcoming Rounds */}
+                        {status.id !== 'rejected' && (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <Calendar size={16} className="text-gray-400" /> Upcoming Rounds
+                                    </h3>
                                     <button
-                                        onClick={handleSave}
-                                        disabled={!hasChanges}
-                                        className={getStatusButtonClass(status.color, hasChanges)}
+                                        onClick={() => setShowAddRoundModal(true)}
+                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
                                     >
-                                        {hasChanges ? 'Save Reflection' : 'Saved'}
+                                        <Plus size={14} /> Add
                                     </button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {upcomingRounds.length === 0 ? (
+                                        <p className="text-xs text-gray-400 italic text-center py-4">No upcoming rounds scheduled</p>
+                                    ) : (
+                                        upcomingRounds
+                                            .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
+                                            .map((round) => {
+                                                const roundDate = new Date(round.scheduledDate);
+                                                const isToday = roundDate.toDateString() === new Date().toDateString();
+                                                const isPast = roundDate < new Date() && !isToday;
+
+                                                return (
+                                                    <div
+                                                        key={round.id}
+                                                        className={`flex items-start gap-3 p-3 rounded-lg border group ${isPast ? 'bg-gray-50 border-gray-200 opacity-60' :
+                                                            isToday ? 'bg-purple-50 border-purple-200' :
+                                                                'bg-white border-gray-200 hover:border-purple-200'
+                                                            } transition-all`}
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className={`text-xs font-bold capitalize ${isPast ? 'text-gray-500' :
+                                                                    isToday ? 'text-purple-700' :
+                                                                        'text-gray-900'
+                                                                    }`}>
+                                                                    {round.type}
+                                                                </span>
+                                                                {isToday && (
+                                                                    <span className="text-[10px] font-bold bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                                                                        TODAY
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                <Calendar size={12} />
+                                                                <span>{roundDate.toLocaleDateString('en-US', {
+                                                                    weekday: 'short',
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                    year: 'numeric'
+                                                                })}</span>
+                                                            </div>
+                                                            {round.notes && (
+                                                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">{round.notes}</p>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => deleteRound(round.id)}
+                                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                    )}
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Right Column: History */}
-                    <div className="lg:col-span-4 space-y-6">
-                        <div className={`bg-white rounded-xl shadow-sm border border-${status.color}-200 p-6`}>
-                            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 font-sans">
-                                <Clock size={18} className={`text-${status.color}-600`} /> Activity History
+                        {/* Activity History */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center gap-2 font-sans">
+                                <Clock size={16} className="text-gray-400" /> Activity History
                             </h3>
                             <div className="relative pl-2">
                                 {/* Vertical Line */}
@@ -892,8 +1573,8 @@ const JobDetailsPage: React.FC = () => {
                                                         <Icon size={12} />
                                                     </div>
                                                     <div className="pt-0.5">
-                                                        <p className="text-xs font-bold text-gray-900 leading-tight">{event.title}</p>
-                                                        <p className="text-[10px] text-gray-400 mt-1 font-mono">{event.date}</p>
+                                                        <p className="text-[11px] font-bold text-gray-900 leading-tight">{event.title}</p>
+                                                        <p className="text-[9px] text-gray-400 mt-1 font-mono">{event.date}</p>
                                                     </div>
                                                 </div>
                                             );

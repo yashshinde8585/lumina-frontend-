@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { User, ChevronDown, Settings, LogOut, LayoutDashboard, ChevronRight, X } from 'lucide-react';
+import { User, ChevronDown, Settings, LogOut, LayoutDashboard, ChevronRight, X, CircleHelp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authService } from '../../services/authService';
+import { startTour } from '../../utils/tourGuide';
 
 interface UserProfileMenuProps {
     user: { name: string; email: string } | null;
@@ -41,7 +42,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user }) => {
                     </span>
                 </div>
 
-                <ChevronDown size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+                <ChevronDown size={14} className="hidden md:block text-slate-400 group-hover:text-slate-600 transition-colors" />
             </button>
 
             {profileMenuOpen && (
@@ -86,6 +87,11 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user }) => {
                             <button onClick={handlePreferencesClick} className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl flex items-center gap-3 transition-all group">
                                 <Settings size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
                                 <span className="flex-1">Settings</span>
+                            </button>
+
+                            <button onClick={() => { setProfileMenuOpen(false); startTour(); }} className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl flex items-center gap-3 transition-all group">
+                                <CircleHelp size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                <span className="flex-1">Help & Tour</span>
                             </button>
                         </div>
 
@@ -166,6 +172,19 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user }) => {
                                             <Settings size={20} />
                                         </div>
                                         Settings
+                                    </span>
+                                    <ChevronRight size={18} className="text-gray-300" />
+                                </button>
+
+                                <button
+                                    onClick={() => { setProfileMenuOpen(false); startTour(); }}
+                                    className="w-full p-4 flex items-center justify-between text-left bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.99] group"
+                                >
+                                    <span className="flex items-center gap-4 font-medium text-gray-700">
+                                        <div className="p-2 bg-gray-100 text-gray-500 rounded-lg group-hover:bg-white group-hover:shadow-sm">
+                                            <CircleHelp size={20} />
+                                        </div>
+                                        Help & Tour
                                     </span>
                                     <ChevronRight size={18} className="text-gray-300" />
                                 </button>
