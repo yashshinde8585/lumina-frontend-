@@ -58,7 +58,7 @@ const MyResumesPage = () => {
         navigate('/editor');
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string | number) => {
         if (confirm('Are you sure you want to delete this resume?')) {
             try {
                 // Delete from backend/Cloudinary
