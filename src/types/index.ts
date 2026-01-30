@@ -42,10 +42,14 @@ export interface ResumeData {
 }
 
 export interface Resume {
-    id: number;
+    id: string | number;
     title: string;
     content: ResumeData;
     updatedAt: string;
+    template?: string;
+    fileUrl?: string;
+    publicId?: string;
+    createdAt?: string;
 }
 
 export interface User {
