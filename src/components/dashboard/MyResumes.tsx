@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 interface DraggableResumeCardProps {
     resume: Resume;
     onEdit: (resume: Resume) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: string | number) => void;
     onRename: (resume: Resume) => void;
 
 }
@@ -154,7 +154,7 @@ interface MyResumesProps {
     setSortBy: (sort: 'date' | 'name') => void;
     onCreateNew: () => void;
     onEdit: (resume: Resume) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: string | number) => void;
     onRename: (resume: Resume) => void;
 
 }
