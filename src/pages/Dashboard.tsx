@@ -28,10 +28,53 @@ import { resumeService } from '../services/resumeService';
 import { TRACKING_COLUMNS, INITIAL_COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { Resume, JobCard, BoardColumn } from '../types';
 
+import MyResumes from '../components/dashboard/MyResumes';
+import { useResume } from '../context/ResumeContext';
+
 const Dashboard = () => {
     const navigate = useNavigate();
-    // const { } = useResume(); // Context available if needed
+    const { setResumeData } = useResume();
     const [resumes, setResumes] = useState<Resume[]>([]);
+    // ... existing state ...
+
+    // Resume List State
+    const [resumeSearchQuery, setResumeSearchQuery] = useState('');
+    const [resumeSortBy, setResumeSortBy] = useState<'date' | 'name'>('date');
+
+    // ... existing logic ...
+
+    // Resume Handlers
+    const handleCreateResume = () => {
+        setResumeData({
+            personalInfo: { fullName: '', email: '', phone: '', linkedin: '', links: [] },
+            summary: '', experience: [], education: [], skills: [], projects: [], certifications: []
+        });
+        navigate('/generate');
+    };
+
+    const handleEditResume = (resume: Resume) => {
+        setResumeData(resume.content);
+        navigate('/editor');
+    };
+
+    const handleDeleteResume = async (id: string | number) => {
+        if (confirm('Are you sure you want to delete this resume?')) {
+            try {
+                await resumeService.deleteResume(id);
+                setResumes(prev => prev.filter(r => r.id !== id));
+                toast.success('Resume deleted successfully');
+            } catch (error) {
+                console.error('Failed to delete resume', error);
+                toast.error('Failed to delete resume');
+            }
+        }
+    };
+
+    const handleRenameResume = (resume: Resume) => {
+        toast.info("Rename feature pending");
+    };
+
+
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<{ name: string, email: string } | null>(null);
 
@@ -588,7 +631,18 @@ const Dashboard = () => {
                                     setScheduleRoundModalOpen(true);
                                 }}
                             >
-                                {/* <MyResumes /> Removed and moved to separate page */}
+                                <MyResumes
+                                    resumes={resumes}
+                                    loading={loading}
+                                    searchQuery={resumeSearchQuery}
+                                    setSearchQuery={setResumeSearchQuery}
+                                    sortBy={resumeSortBy}
+                                    setSortBy={setResumeSortBy}
+                                    onCreateNew={handleCreateResume}
+                                    onEdit={handleEditResume}
+                                    onDelete={handleDeleteResume}
+                                    onRename={handleRenameResume}
+                                />
                             </JobBoard>
                         </div>
                     )}
