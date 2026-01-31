@@ -17,12 +17,25 @@ interface ResumeDispatch {
 const ResumeStateContext = createContext<ResumeState | undefined>(undefined);
 const ResumeDispatchContext = createContext<ResumeDispatch | undefined>(undefined);
 
-export const useResume = (): ResumeState & ResumeDispatch => {
-    const state = useContext(ResumeStateContext);
-    const dispatch = useContext(ResumeDispatchContext);
-    if (!state || !dispatch) {
-        throw new Error('useResume must be used within a ResumeProvider');
+export const useResumeState = () => {
+    const context = useContext(ResumeStateContext);
+    if (!context) {
+        throw new Error('useResumeState must be used within a ResumeProvider');
     }
+    return context;
+};
+
+export const useResumeDispatch = () => {
+    const context = useContext(ResumeDispatchContext);
+    if (!context) {
+        throw new Error('useResumeDispatch must be used within a ResumeProvider');
+    }
+    return context;
+};
+
+export const useResume = (): ResumeState & ResumeDispatch => {
+    const state = useResumeState();
+    const dispatch = useResumeDispatch();
     return { ...state, ...dispatch };
 };
 

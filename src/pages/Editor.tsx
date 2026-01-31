@@ -84,23 +84,29 @@ const Editor: React.FC = () => {
                 template: isCompact ? TEMPLATES.COMPACT : TEMPLATES.DETAILED
             };
 
+            let savedResumeData = resumeToSave;
+
             try {
-                // Try to save to backend
-                await resumeService.saveResume(resumeToSave);
+                // Try to save to backend and get the authoritative version (with DB ID)
+                const response = await resumeService.saveResume(resumeToSave);
+                if (response) {
+                    savedResumeData = { ...resumeToSave, ...response };
+                }
             } catch (backendError) {
                 console.error('Backend save failed, saving to localStorage:', backendError);
+                // Fallback to local generated ID
             }
 
-            // Always save to localStorage as backup
+            // Always save to localStorage as backup/cache (using authoritative data)
             const savedResumes = localStorage.getItem('savedResumes');
             const resumes = savedResumes ? JSON.parse(savedResumes) : [];
 
             // Check if exists
-            const existingIndex = resumes.findIndex((r: any) => r.id === resumeToSave.id);
+            const existingIndex = resumes.findIndex((r: any) => r.id === savedResumeData.id);
             if (existingIndex >= 0) {
-                resumes[existingIndex] = resumeToSave;
+                resumes[existingIndex] = savedResumeData;
             } else {
-                resumes.push(resumeToSave);
+                resumes.push(savedResumeData);
             }
             localStorage.setItem('savedResumes', JSON.stringify(resumes));
 
