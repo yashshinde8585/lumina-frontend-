@@ -42,6 +42,13 @@ axiosInstance.interceptors.response.use(
                 // Error in request setup
                 console.error('API Request Setup Error:', error.message);
             }
+        } else {
+            // Production Logging (Minimal)
+            if (error.response && error.response.status >= 500) {
+                console.warn(`Server Error (${error.response.status}) at ${error.config?.url}`);
+            } else if (error.request) {
+                console.warn(`Network Error at ${error.config?.url}`);
+            }
         }
 
         return Promise.reject(error);

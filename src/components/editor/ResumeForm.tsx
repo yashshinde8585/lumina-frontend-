@@ -170,7 +170,8 @@ const SectionForm: React.FC<SectionFormProps> = ({ title, items, onUpdate, itemT
     };
 
     const updateItem = (index: number, field: string, value: string) => {
-        const newItems = [...items];
+        // Deep clone to prevent mutating nested objects by reference
+        const newItems = structuredClone(items);
         newItems[index] = { ...newItems[index], [field]: value };
         onUpdate(newItems);
     };

@@ -7,7 +7,7 @@ import { authService } from '../services/authService';
 import { Button } from '../components/ui/Button';
 // import { TextArea } from '../components/ui/TextArea';
 import { Card } from '../components/ui/Card';
-import { ArrowLeft, Link as LinkIcon, FileText, Upload, Plus, Briefcase, Wand2 } from 'lucide-react';
+import { ArrowLeft, FileText, Upload, Plus, Briefcase, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // import { EXPERIENCE_LEVELS } from '../utils/constants';
 
@@ -34,7 +34,7 @@ const Generator: React.FC = () => {
     // Import Form State
     const [companyName, setCompanyName] = useState('');
     const [role, setRole] = useState('');
-    const [jobLink, setJobLink] = useState('');
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [importLoading, setImportLoading] = useState(false);
 
@@ -118,7 +118,7 @@ const Generator: React.FC = () => {
                     date: new Date().toISOString(),
                     type: 'manual'
                 }],
-                description: jobLink // Storing link in description for now if no specific field
+                description: '' // Default description empty
             };
 
             // 3. Update Board Logic (LocalStorage + Backend)
@@ -175,7 +175,7 @@ const Generator: React.FC = () => {
             // Reset form
             setCompanyName('');
             setRole('');
-            setJobLink('');
+
             setSelectedFile(null);
 
             // Optional: Redirect or stay
@@ -328,20 +328,7 @@ const Generator: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1 group pt-1">
-                                        <label className="text-xs font-medium text-gray-600 ml-1">Job Link <span className="text-gray-400 font-normal text-xs">(Optional)</span></label>
-                                        <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                                                <LinkIcon size={16} />
-                                            </div>
-                                            <input
-                                                value={jobLink}
-                                                onChange={(e) => setJobLink(e.target.value)}
-                                                placeholder="https://..."
-                                                className="w-full py-2.5 pl-10 pr-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-500/50 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] transition-all placeholder:text-gray-300 placeholder:italic placeholder:font-light"
-                                            />
-                                        </div>
-                                    </div>
+
 
                                     {/* PDF Upload - Drag & Drop Area */}
                                     <div className="space-y-2 pt-2 pb-2">

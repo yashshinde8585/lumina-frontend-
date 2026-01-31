@@ -28,54 +28,22 @@ import { resumeService } from '../services/resumeService';
 import { TRACKING_COLUMNS, INITIAL_COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { Resume, JobCard, BoardColumn } from '../types';
 
-import MyResumes from '../components/dashboard/MyResumes';
-import { useResume } from '../context/ResumeContext';
+
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { setResumeData } = useResume();
     const [resumes, setResumes] = useState<Resume[]>([]);
     // ... existing state ...
 
-    // Resume List State
-    const [resumeSearchQuery, setResumeSearchQuery] = useState('');
-    const [resumeSortBy, setResumeSortBy] = useState<'date' | 'name'>('date');
+    // Resume List State (Removed)
 
     // ... existing logic ...
 
     // Resume Handlers
-    const handleCreateResume = () => {
-        setResumeData({
-            personalInfo: { fullName: '', email: '', phone: '', linkedin: '', links: [] },
-            summary: '', experience: [], education: [], skills: [], projects: [], certifications: []
-        });
-        navigate('/generate');
-    };
-
-    const handleEditResume = (resume: Resume) => {
-        setResumeData(resume.content);
-        navigate('/editor');
-    };
-
-    const handleDeleteResume = async (id: string | number) => {
-        if (confirm('Are you sure you want to delete this resume?')) {
-            try {
-                await resumeService.deleteResume(id);
-                setResumes(prev => prev.filter(r => r.id !== id));
-                toast.success('Resume deleted successfully');
-            } catch (error) {
-                console.error('Failed to delete resume', error);
-                toast.error('Failed to delete resume');
-            }
-        }
-    };
-
-    const handleRenameResume = (resume: Resume) => {
-        toast.info("Rename feature pending");
-    };
 
 
-    const [loading, setLoading] = useState(true);
+
+    const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<{ name: string, email: string } | null>(null);
 
     // Job Board State (Lifted & Shared) - Load from localStorage with safe merge
@@ -163,17 +131,23 @@ const Dashboard = () => {
         const userEmail = user?.email || authService.getUserEmail() || 'guest';
         const storageKey = `jobColumns_${userEmail}`;
         const timeoutId = setTimeout(async () => {
-            localStorage.setItem(storageKey, JSON.stringify(columns));
-
-            // Also sync to backend if logged in
+            // "Single Source of Truth": Backend First
             if (authService.getToken()) {
                 try {
                     await authService.updateBoard(columns);
+                    // Only update localStorage if backend sync succeeds (or regardless, but backend is primary)
+                    // We treat localStorage as a cache appropriately here.
+                    localStorage.setItem(storageKey, JSON.stringify(columns));
                 } catch (err) {
                     console.error('Failed to sync board to backend:', err);
+                    // Optional: Don't update localStorage if backend fails to avoid split brain?
+                    // Or keep it for offline? "Update localStorage only after a successful backend sync" - per instructions.
                 }
+            } else {
+                // Guest / Offline Mode
+                localStorage.setItem(storageKey, JSON.stringify(columns));
             }
-        }, 1000); // 1-second debounce to prevent lag on rapid changes
+        }, 1000); // 1-second debounce
         return () => clearTimeout(timeoutId);
     }, [columns, user]);
 
@@ -183,6 +157,7 @@ const Dashboard = () => {
             if (e.key === 'Escape') {
                 setDropModalOpen(false);
                 setTailorModalOpen(false);
+                setScheduleRoundModalOpen(false);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -191,7 +166,8 @@ const Dashboard = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
+            // Don't block UI with loading state -> Stale-While-Revalidate pattern
+            // setLoading(true); 
             try {
                 // Create promises for both requests immediately
                 const resumesPromise = resumeService.getAllResumes()
@@ -630,20 +606,7 @@ const Dashboard = () => {
                                     });
                                     setScheduleRoundModalOpen(true);
                                 }}
-                            >
-                                <MyResumes
-                                    resumes={resumes}
-                                    loading={loading}
-                                    searchQuery={resumeSearchQuery}
-                                    setSearchQuery={setResumeSearchQuery}
-                                    sortBy={resumeSortBy}
-                                    setSortBy={setResumeSortBy}
-                                    onCreateNew={handleCreateResume}
-                                    onEdit={handleEditResume}
-                                    onDelete={handleDeleteResume}
-                                    onRename={handleRenameResume}
-                                />
-                            </JobBoard>
+                            />
                         </div>
                     )}
                 </main>
