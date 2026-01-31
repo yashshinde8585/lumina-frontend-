@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { useResume } from '../context/ResumeContext';
+import { useResumeDispatch } from '../context/ResumeContext';
 import { resumeService } from '../services/resumeService';
 
 import { Resume } from '../types';
@@ -14,7 +14,7 @@ import { Logo } from '../components/Logo';
 
 const MyResumesPage = () => {
     const navigate = useNavigate();
-    const { setResumeData } = useResume();
+    const { setResumeData } = useResumeDispatch();
     const [resumes, setResumes] = useState<Resume[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
