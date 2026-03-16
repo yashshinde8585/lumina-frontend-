@@ -1,96 +1,132 @@
-# AI Resume Generator
+# Lumina — AI-Powered Resume Builder
 
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![React](https://img.shields.io/badge/React-18.0.0-blue?logo=react)
-![Tailwind](https://img.shields.io/badge/Tailwind-3.0.0-cyan?logo=tailwind-css)
+> Build, tailor, and track your job applications — all in one place.
 
-## 📌 Project Title & Description
-**AI Resume Generator** is a modern, AI-powered web application designed to streamline the resume creation process. It leverages Google's Gemini AI to automatically generate professional, ATS-optimized content from simple job descriptions, wrapping it all in a stunning glassmorphic user interface.
-
-## ❓ Problem Statement
-Job seekers often struggle to create resumes that pass Applicant Tracking Systems (ATS) while maintaining a professional design. Writing tailored content for every job application is time-consuming and repetitive. Existing tools are either too clunky, expensive, or lack intelligent customization. **AI Resume Generator** solves this by combining powerful AI for content generation with a beautiful, easy-to-use editor.
-
-## ✨ Features
-- **🤖 AI-Powered Content**: Paste a job description and experience level to generate tailored resume sections instantly using Google Gemini.
-- **🎨 Modern Glassmorphism UI**: A visually striking, responsive interface built with Tailwind CSS and Framer Motion.
-- **⚡ Real-Time WYSIWYG Editor**: Edit generated content seamlessly with a live preview.
-- **📄 One-Click PDF Export**: Download your resume in a clean, professional format ready for application.
-- **� Secure Authentication**: User accounts with secure login/signup to save and manage multiple resumes.
-- **� Fully Responsive**: Optimized for Desktop, Tablet, and Mobile experiences.
-
-## 🛠 Tech Stack
-- **Frontend Framework**: React.js (Vite)
-- **Styling**: Tailwind CSS, Vanilla CSS (for custom glassmorphism)
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **State Management**: React Context API
-- **API Client**: Axios
-
-## 📂 Project Architecture
-The project follows a modular, component-based architecture for scalability and maintainability.
-
-```
-my-resume/
-├── src/
-│   ├── components/
-│   │   ├── editor/         # Resume editing logic & sub-components
-│   │   ├── home/           # Landing page specific components
-│   │   ├── ui/             # Reusable atomic UI elements (Buttons, Inputs)
-│   ├── context/            # Global state (Authentication, Resume Data)
-│   ├── pages/              # Application Routes (Home, Dashboard, Editor)
-│   ├── services/           # API integration services
-│   └── utils/              # Helper functions, constants, validation
-├── public/                 # Static assets
-└── tailwind.config.js      # Design Token configuration
-```
-
-## 🚀 Installation & Setup Instructions
-
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/yourusername/my-resume.git
-    cd my-resume
-    ```
-
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Start the Development Server**
-    ```bash
-    npm run dev
-    ```
-    The application will launch at `http://localhost:5173`.
-
-## 🔑 Environment Variables
-Create a `.env` file in the root directory to configure the application.
-
-```env
-# API Base URL (Point this to your local or hosted backend)
-VITE_API_BASE_URL=http://localhost:5002/api
-```
-
-## 🔌 API Endpoints / Integration
-The frontend communicates with the `Backend-my-resume` service. Key integrations include:
-
-- `POST /auth/login`: Authenticates users and retrieves JWT.
-- `POST /generate`: Sends Job Description to AI and receives JSON resume structure.
-- `POST /resumes`: Saves key resume data to the database.
-
-## 📸 Screenshots
-*(Placeholder for project screenshots - add images of Landing Page, Editor, and Dashboard here)*
-
-## 🔮 Future Enhancements
-- [ ] **Multi-Template Support**: Add more template designs (Minimal, Creative, Corporate).
-- [ ] **AI Cover Letter**: Generate matching cover letters for resumes.
-- [ ] **LinkedIn Import**: Import profile data directly from LinkedIn PDF.
-- [ ] **Resume Scoring**: Real-time feedback on resume quality.
-
-## ✍️ Author & Contact
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+**Lumina** is a modern, full-featured resume platform that helps you create polished resumes with AI assistance, manage multiple resume versions, and track your entire job application journey through a visual Kanban board.
 
 ---
-*Built with ❤️ for job seekers everywhere.*
+
+## Features
+
+**Resume Builder**
+- AI-powered content generation using the Gemini Pro model
+- Rich text editor with Lexical for fine-grained formatting control
+- Drag-and-drop section reordering via dnd-kit
+- Live preview with export to PDF via react-to-print
+- Import existing resumes from file
+
+**Smart Job Tracker**
+- Kanban-style job board — Saved → Applied → Screening → Aptitude → Technical → Interview → Offer
+- Drag a resume onto a job column to instantly create a linked application
+- Drop a resume directly onto a job card to trigger AI tailoring
+- One-way status enforcement to keep your pipeline clean
+- Confetti celebration on offer stage 🎉
+
+**Analytics Dashboard**
+- Application funnel visualization with Recharts
+- Status history tracking per job card
+- Round scheduling (aptitude, technical, interview) with date picker
+- Stale-while-revalidate data strategy for instant load times
+
+**Auth & Account**
+- Email / password signup and login
+- Google OAuth sign-in via `@react-oauth/google`
+- Protected routes for user and admin roles
+- Persistent board state synced to backend with localStorage fallback
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + Vite |
+| Language | TypeScript |
+| Styling | Tailwind CSS + Emotion |
+| UI Components | MUI, Lucide React |
+| Rich Text | Lexical Editor |
+| Drag & Drop | dnd-kit |
+| Animations | Framer Motion |
+| HTTP Client | Axios |
+| Routing | React Router DOM v7 |
+| Charts | Recharts |
+| Auth | JWT + Google OAuth |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js `>=18`
+- The [Backend API](https://github.com/yashshinde8585/backend-my-resume) running locally on port `5002`
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yashshinde8585/my-resume.git
+cd my-resume
+
+# Install dependencies
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root:
+
+```env
+VITE_API_URL=http://localhost:5002
+```
+
+### Run Locally
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── auth/           # ProtectedRoute, auth guards
+│   ├── dashboard/      # JobBoard, AnalyticsSection, JobDetailsDrawer
+│   ├── layout/         # AppHeader
+│   └── ui/             # Button, ErrorBoundary, etc.
+├── context/            # ResumeContext (global state)
+├── hooks/              # Custom React hooks
+├── pages/              # Route-level page components
+├── services/           # API service layer (authService, resumeService)
+├── types/              # TypeScript type definitions
+├── utils/              # Constants and helper functions
+└── App.jsx             # Router configuration
+```
+
+---
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run lint` | Lint with ESLint |
+| `npm run preview` | Preview production build |
+
+---
+
+## License
+
+MIT
